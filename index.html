@@ -1,289 +1,492 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>BHC Chat</title>
 <style>
-body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#fff; height:100vh; display:flex; flex-direction:column; }
-header { background:#0f1524; padding:1rem; display:flex; justify-content:space-between; align-items:center; font-size:1.5rem; font-weight:bold; }
-#currentChat { font-size:0.9rem; color:#7a7a7a; margin-left:1rem; }
-#returnGlobalBtn { display:none; background:#0b78e3; color:#fff; border:none; border-radius:5px; padding:0.3rem 0.6rem; cursor:pointer; }
-#chatContainer { display:flex; flex:1; overflow:hidden; }
-#userList { width:220px; border-right:1px solid #1c2335; overflow-y:auto; padding:0.5rem; }
-#userList h3 { margin-top:0; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; }
-#userList ul { list-style:none; padding:0; margin:0; }
-#userList li { padding:0.5rem; cursor:pointer; border-radius:5px; display:flex; flex-direction:column; }
-#userList li:hover { background:#1c2335; }
-#userList li.active { background:#0b78e3; }
-.user-name { display:flex; align-items:center; gap:0.5rem; }
-.user-notif { font-size:0.75rem; color:#ff3333; }
-.chatMain { display:flex; flex-direction:column; flex:1; }
-#typingIndicator { font-size:0.85rem; color:#7a7a7a; padding-left:1rem; margin-bottom:0.2rem; height:18px; }
-#messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; background:#101426; scrollbar-width:thin; scrollbar-color:#0b78e3 #101426; }
-#messages::-webkit-scrollbar { width:8px; }
-#messages::-webkit-scrollbar-track { background:#101426; }
-#messages::-webkit-scrollbar-thumb { background:#0b78e3; border-radius:4px; }
-.message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; display:flex; align-items:center; }
-.message.self { background:#0b78e3; align-self:flex-end; color:#fff; flex-direction:row-reverse; }
-.message.other { background:#1c2335; align-self:flex-start; color:#fff; }
-.timestamp { font-size:0.65rem; color:#7a7a7a; margin-left:0.5rem; margin-right:0.5rem; }
-#input { display:flex; padding:0.5rem; background:#141a2c; border-top:1px solid #1c2335; }
-#input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#101426; color:#fff; }
-#input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
-#authModal, #groupModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:10; }
-#authBox, #groupBox { background:#101426; padding:2rem; border-radius:15px; width:320px; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5); }
-#authBox input, #groupBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
-#authBox button, #groupBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; }
-.profile-circle { display:inline-flex; justify-content:center; align-items:center; width:30px; height:30px; border-radius:50%; color:#fff; font-weight:bold; font-size:0.8rem; flex-shrink:0; }
-#groupButton { font-size:0.8rem; padding:0.2rem 0.4rem; }
-.group-user { display:flex; justify-content:space-between; align-items:center; padding:0.3rem 0; }
-.group-selected { background:#0b78e3; }
+:root{
+  --bg:#0a0f1a; --panel:#101426; --muted:#7a7a7a; --accent:#0b78e3; --card:#1c2335;
+}
+body{margin:0;font-family:Segoe UI,system-ui,-apple-system,Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#fff;height:100vh;display:flex;flex-direction:column}
+header{background:#0f1524;padding:1rem;display:flex;align-items:center;justify-content:space-between}
+#currentChat{font-size:0.95rem;color:var(--muted)}
+#returnGlobalBtn{display:none;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer}
+#chatContainer{display:flex;flex:1;overflow:hidden}
+#userList{width:240px;border-right:1px solid #1c2335;overflow-y:auto;padding:0.6rem;background:transparent}
+#userList::-webkit-scrollbar{width:10px}
+#userList::-webkit-scrollbar-thumb{background:#141a2c;border-radius:6px}
+#userList h3{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px 0}
+#groupButton{background:var(--accent);border:none;color:#fff;border-radius:6px;padding:6px 8px;cursor:pointer;font-size:0.85rem}
+ul.list{list-style:none;padding:0;margin:0}
+ul.list li{display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;cursor:pointer;flex-direction:column;align-items:flex-start}
+ul.list li:hover{background:var(--card)}
+ul.list li.active{background:var(--accent)}
+.user-name{display:flex;align-items:center;gap:8px;width:100%;justify-content:space-between}
+.user-meta{display:flex;flex-direction:row;align-items:center;gap:8px}
+.user-notif{font-size:0.75rem;color:#ff4d4d}
+.profile-circle{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;font-weight:700;font-size:0.85rem;color:#fff;flex-shrink:0}
+.chatMain{flex:1;display:flex;flex-direction:column}
+#typingIndicator{height:18px;padding:8px 12px;color:var(--muted);font-size:0.85rem}
+#messages{flex:1;padding:14px;overflow:auto;display:flex;flex-direction:column;gap:8px;background:var(--panel);scrollbar-width:thin;scrollbar-color:var(--accent) var(--panel)}
+#messages::-webkit-scrollbar{width:8px}
+#messages::-webkit-scrollbar-track{background:var(--panel)}
+#messages::-webkit-scrollbar-thumb{background:var(--accent);border-radius:6px}
+.message{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;max-width:70%;word-break:break-word}
+.message.self{margin-left:auto;background:var(--accent);flex-direction:row-reverse}
+.message.other{margin-right:auto;background:var(--card)}
+.timestamp{font-size:0.65rem;color:var(--muted);margin-left:6px;margin-right:6px}
+#input{display:flex;padding:10px;background:#141a2c;border-top:1px solid #1c2335}
+#messageInput{flex:1;padding:10px;border-radius:20px 0 0 20px;border:none;background:#101426;color:#fff}
+#sendBtn{padding:10px 14px;border:none;border-radius:0 20px 20px 0;background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal{background:var(--panel);padding:18px;border-radius:12px;width:420px;max-height:80vh;overflow:auto;position:relative}
+.closeButton{position:absolute;right:12px;top:12px;background:var(--accent);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer}
+.group-user{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px}
+.selected-pill{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--accent);margin:4px}
+.small{font-size:0.85rem}
 </style>
 </head>
 <body>
-
 <header>
-  <span>BHC Chat</span>
-  <span id="currentChat">Global Chat</span>
-  <button id="returnGlobalBtn">Global Chat</button>
+  <strong>BHC Chat</strong>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span id="currentChat">Global Chat</span>
+    <button id="returnGlobalBtn">Global Chat</button>
+  </div>
 </header>
 
 <div id="chatContainer">
-  <div id="userList">
-    <h3>Users <button id="groupButton">+ Group</button></h3>
-    <ul id="users"></ul>
-  </div>
-  <div class="chatMain">
+  <aside id="userList">
+    <h3>Users <button id="groupButton" title="Create group">+ Group</button></h3>
+    <ul id="users" class="list"></ul>
+  </aside>
+
+  <main class="chatMain">
     <div id="typingIndicator"></div>
-    <div id="messages"></div>
+    <div id="messages" role="log" aria-live="polite"></div>
     <div id="input">
-      <input type="text" id="messageInput" placeholder="Type your message...">
+      <input id="messageInput" placeholder="Type your message..." autocomplete="off" />
       <button id="sendBtn">Send</button>
     </div>
-  </div>
+  </main>
 </div>
 
-<div id="authModal">
-  <div id="authBox">
+<!-- auth modal -->
+<div id="authModal" class="modal-backdrop">
+  <div class="modal" id="authBox">
     <h2>Enter Code</h2>
-    <input type="text" id="codeInput" placeholder="Enter your code">
+    <input id="codeInput" placeholder="Enter your code" />
     <button id="loginBtn">Enter Chat</button>
   </div>
 </div>
 
-<div id="groupModal" style="display:none;">
-  <div id="groupBox">
+<!-- group modal -->
+<div id="groupModal" class="modal-backdrop" style="display:none">
+  <div class="modal" id="groupBox">
+    <button class="closeButton" id="closeGroupModal">&times;</button>
     <h2>Create Group</h2>
-    <input type="text" id="groupNameInput" placeholder="Group Name">
-    <input type="text" id="searchUserInput" placeholder="Search Users">
-    <div id="searchResults"></div>
-    <button id="createGroupSubmit">Create Group</button>
-    <button id="cancelGroup">Cancel</button>
+    <input id="groupNameInput" placeholder="Group name" />
+    <div id="selectedUsersWrap" style="margin-bottom:8px"></div>
+    <input id="searchUserInput" placeholder="Search users to add" />
+    <div id="searchResults" style="max-height:220px;overflow:auto;margin-top:8px"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="createGroupSubmit">Create Group</button>
+      <button id="cancelGroupBtn">Cancel</button>
+    </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-document.addEventListener('DOMContentLoaded',()=>{
-const supabaseUrl='https://azpgwbxillscpwrraprl.supabase.co';
-const supabaseKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
-const client=supabase.createClient(supabaseUrl,supabaseKey);
+document.addEventListener('DOMContentLoaded', async () => {
+  const SUPABASE_URL = 'https://azpgwbxillscpwrraprl.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+  const supabase = window.supabase;
+  const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let currentUser=null;
-let privateChatUser=null;
-let currentGroup=null;
-const messagesEl=document.getElementById('messages');
-const messageInput=document.getElementById('messageInput');
-const sendBtn=document.getElementById('sendBtn');
-const codeInput=document.getElementById('codeInput');
-const loginBtn=document.getElementById('loginBtn');
-const authModal=document.getElementById('authModal');
-const typingIndicator=document.getElementById('typingIndicator');
-const usersEl=document.getElementById('users');
-const currentChatEl=document.getElementById('currentChat');
-const returnGlobalBtn=document.getElementById('returnGlobalBtn');
-const groupModal=document.getElementById('groupModal');
-const groupButton=document.getElementById('groupButton');
-const groupNameInput=document.getElementById('groupNameInput');
-const searchUserInput=document.getElementById('searchUserInput');
-const searchResults=document.getElementById('searchResults');
-const createGroupSubmit=document.getElementById('createGroupSubmit');
-const cancelGroup=document.getElementById('cancelGroup');
+  // state
+  let currentUser = null;            // { username }
+  let privateChatUser = null;        // username string
+  let currentGroup = null;           // { id, name, creator }
+  let unreadCounts = {};            // key -> count (username for DMs, groupId for groups, 'global' for global)
+  let selectedUsers = [];           // for group creation
 
-let typingUsers=new Set();
-let typingTimeout;
-let unreadCounts={};
+  // elements
+  const authModal = document.getElementById('authModal');
+  const codeInput = document.getElementById('codeInput');
+  const loginBtn = document.getElementById('loginBtn');
+  const usersEl = document.getElementById('users');
+  const messagesEl = document.getElementById('messages');
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const currentChatEl = document.getElementById('currentChat');
+  const returnGlobalBtn = document.getElementById('returnGlobalBtn');
 
-function getInitials(name){return name.split(' ').map(n=>n[0].toUpperCase()).join('').slice(0,2);}
-function stringToColor(str){let hash=0;for(let i=0;i<str.length;i++){hash=str.charCodeAt(i)+((hash<<5)-hash);}return `hsl(${hash%360},70%,50%)`;}
-function createProfileCircle(username){const span=document.createElement('span');span.className='profile-circle';span.style.background=stringToColor(username);span.textContent=getInitials(username);return span;}
-function appendMessage(message,type){const div=document.createElement('div');div.className='message '+type;div.appendChild(createProfileCircle(message.username));const content=document.createElement('span');content.innerHTML=`<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`;div.appendChild(content);messagesEl.appendChild(div);messagesEl.scrollTop=messagesEl.scrollHeight;}
-function updateTypingIndicator(){if(typingUsers.size===0){typingIndicator.textContent='';return;}const names=Array.from(typingUsers);typingIndicator.textContent=names.length===1?`${names[0]} is typing...`:`${names.join(' and ')} are typing...`;}
-function updateTitle(){let count=0;for(let key in unreadCounts){count+=unreadCounts[key];}document.title=count>0?`(${count}) BHC Chat`:'BHC Chat';}
+  const groupButton = document.getElementById('groupButton');
+  const groupModal = document.getElementById('groupModal');
+  const closeGroupModal = document.getElementById('closeGroupModal');
+  const groupNameInput = document.getElementById('groupNameInput');
+  const searchUserInput = document.getElementById('searchUserInput');
+  const searchResults = document.getElementById('searchResults');
+  const selectedUsersWrap = document.getElementById('selectedUsersWrap');
+  const createGroupSubmit = document.getElementById('createGroupSubmit');
+  const cancelGroupBtn = document.getElementById('cancelGroupBtn');
 
-async function loginWithCode(code){
- const {data,error}=await client.from('chat_codes').select('username').eq('code',code).single();
- if(error||!data){alert('Invalid code');return false;}
- currentUser={username:data.username,code}; localStorage.setItem('chatCode',code); authModal.style.display='none';
- await loadUsers(); await loadMessages(); subscribeMessages(); subscribeTyping(); return true;
-}
-loginBtn.onclick=()=>{const code=codeInput.value.trim();if(!code)return alert('Enter your code'); loginWithCode(code);}
-const savedCode=localStorage.getItem('chatCode');if(savedCode) loginWithCode(savedCode);
+  // helpers
+  function initials(name){ return name.split(' ').map(n=>n[0]?.toUpperCase()||'').join('').slice(0,2); }
+  function colorFor(name){ let h=0; for(let i=0;i<name.length;i++){ h=name.charCodeAt(i)+((h<<5)-h);} return `hsl(${Math.abs(h)%360} 70% 50%)`; }
+  function profileCircle(name){ const s=document.createElement('span'); s.className='profile-circle'; s.style.background=colorFor(name); s.textContent=initials(name); return s; }
 
-async function loadUsers(){
- if(!currentUser) return;
- const {data,error}=await client.from('chat_codes').select('username');
- if(error) return console.error(error);
- usersEl.innerHTML='';
- data.forEach(u=>{
-  if(u.username===currentUser.username) return;
-  const li=document.createElement('li');
-  const nameDiv=document.createElement('div'); nameDiv.className='user-name';
-  nameDiv.appendChild(createProfileCircle(u.username));
-  const text=document.createElement('span'); text.textContent=u.username; nameDiv.appendChild(text);
-  li.appendChild(nameDiv);
-  const notif=document.createElement('span'); notif.className='user-notif';
-  if(unreadCounts[u.username]) notif.textContent='‼️New Message‼️';
-  li.appendChild(notif);
-  li.onclick=()=>selectPrivateChat(u.username,li);
-  if(privateChatUser===u.username) li.classList.add('active');
-  usersEl.appendChild(li);
- });
- await loadGroups();
-}
+  function updateTitle(){
+    const total = Object.values(unreadCounts).reduce((a,b)=>a+(b||0),0);
+    document.title = total>0 ? `(${total}) BHC Chat` : 'BHC Chat';
+  }
 
-async function loadGroups(){
- const {data,error}=await client.from('groups').select('*');
- if(error) return console.error(error);
- data.forEach(g=>{
-  const li=document.createElement('li');
-  const nameDiv=document.createElement('div'); nameDiv.className='user-name';
-  nameDiv.appendChild(createProfileCircle(g.name));
-  const text=document.createElement('span'); text.textContent=g.name;
-  nameDiv.appendChild(text);
-  li.appendChild(nameDiv);
-  const notif=document.createElement('span'); notif.className='user-notif';
-  if(unreadCounts[g.id]) notif.textContent='‼️New Message‼️';
-  li.appendChild(notif);
-  li.onclick=()=>selectGroupChat(g,g.id,li);
-  if(currentGroup && currentGroup.id===g.id) li.classList.add('active');
-  usersEl.appendChild(li);
- });
-}
+  function clearMessages(){ messagesEl.innerHTML=''; messagesEl.scrollTop=0; }
 
-function selectPrivateChat(username,liElement){
- privateChatUser=username; currentGroup=null; currentChatEl.textContent=username; returnGlobalBtn.style.display='inline-block';
- [...usersEl.children].forEach(li=>li.classList.remove('active')); if(liElement) liElement.classList.add('active');
- unreadCounts[username]=0; updateTitle(); loadMessages();
-}
-function selectGroupChat(group,id,liElement){
- currentGroup=group; privateChatUser=null; currentChatEl.textContent=group.name; returnGlobalBtn.style.display='inline-block';
- [...usersEl.children].forEach(li=>li.classList.remove('active')); if(liElement) liElement.classList.add('active');
- unreadCounts[id]=0; updateTitle(); loadMessages();
-}
-returnGlobalBtn.onclick=()=>{privateChatUser=null; currentGroup=null; currentChatEl.textContent='Global Chat'; returnGlobalBtn.style.display='none'; [...usersEl.children].forEach(li=>li.classList.remove('active')); loadMessages();}
+  function appendMessageObj({who,text,at}, type){
+    const div = document.createElement('div');
+    div.className = 'message ' + (type==='self' ? 'self' : 'other');
+    div.appendChild(profileCircle(who));
+    const span = document.createElement('span');
+    span.innerHTML = `<strong>${who}</strong>: ${escapeHtml(text)} <span class="timestamp">${new Date(at).toLocaleTimeString()}</span>`;
+    div.appendChild(span);
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
 
-sendBtn.onclick=sendMessage;
-messageInput.addEventListener('keypress',(e)=>{if(e.key==='Enter') sendMessage();});
-messageInput.addEventListener('input',async()=>{if(!currentUser)return; await client.from('typing_status').upsert({username:currentUser.username,typing:true,updated_at:new Date().toISOString()}); clearTimeout(typingTimeout); typingTimeout=setTimeout(async()=>{await client.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});},2000);});
+  function escapeHtml(str){
+    if(!str) return '';
+    return str.replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
 
-async function sendMessage(){
- const msg=messageInput.value.trim(); if(!msg||!currentUser)return;
- if(privateChatUser){
-   const data={sender:currentUser.username,receiver:privateChatUser,message:msg,created_at:new Date().toISOString()};
-   appendMessage({username:currentUser.username,message:msg,created_at:data.created_at},'self');
-   await client.from('private_messages').insert([data]);
- }else if(currentGroup){
-   const data={group_id:currentGroup.id,sender:currentUser.username,message:msg,created_at:new Date().toISOString()};
-   appendMessage({username:currentUser.username,message:msg,created_at:data.created_at},'self');
-   await client.from('group_messages').insert([data]);
- }else{
-   const data={username:currentUser.username,message:msg,created_at:new Date().toISOString()};
-   appendMessage(data,'self');
-   await client.from('global_messages').insert([data]);
- }
- messageInput.value='';
- await client.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});
-}
+  // ---------- login ----------
+  async function loginWithCode(code){
+    try{
+      const { data, error } = await client.from('chat_codes').select('username').eq('code', code).single();
+      if(error || !data) { alert('Invalid code'); return; }
+      currentUser = { username: data.username };
+      localStorage.setItem('chatCode', code);
+      authModal.style.display = 'none';
+      await loadUsersAndGroups();
+      await loadMessages();
+      subscribeAll();
+      subscribeTyping();
+    }catch(err){ console.error(err); alert('Login failed'); }
+  }
+  loginBtn.onclick = ()=>{ const c = codeInput.value.trim(); if(!c) return alert('Enter your code'); loginWithCode(c); };
+  const saved = localStorage.getItem('chatCode');
+  if(saved) loginWithCode(saved).catch(()=>{/*ignore*/});
 
-async function loadMessages(){
- let data=[];
- if(privateChatUser){
-   const res=await client.from('private_messages').select('*')
-     .or(`sender.eq.${currentUser.username},receiver.eq.${currentUser.username}`)
-     .or(`sender.eq.${privateChatUser},receiver.eq.${privateChatUser}`)
-     .order('created_at',{ascending:true});
-   data=res.data;
- }else if(currentGroup){
-   const res=await client.from('group_messages').select('*').eq('group_id',currentGroup.id).order('created_at',{ascending:true});
-   data=res.data;
- }else{
-   const res=await client.from('global_messages').select('*').order('created_at',{ascending:true});
-   data=res.data;
- }
- messagesEl.innerHTML='';
- data.forEach(m=>{const type=(m.username===currentUser.username || m.sender===currentUser.username)?'self':'other'; appendMessage({username:m.username||m.sender,message:m.message,created_at:m.created_at},type);});
-}
+  // ---------- users & groups list ----------
+  async function loadUsersAndGroups(){
+    if(!currentUser) return;
+    // users
+    const { data: users } = await client.from('chat_codes').select('username').order('username',{ascending:true});
+    // groups where current user is a member
+    const { data: memberships } = await client
+      .from('group_members')
+      .select('group_id, groups(id,name,creator)')
+      .eq('username', currentUser.username);
 
-function subscribeMessages(){
- if(window.messageChannel) window.messageChannel.unsubscribe();
- window.messageChannel=client.channel('public:global_messages')
-   .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{const m=payload.new;if(!currentUser || m.username===currentUser.username)return; appendMessage(m,'other'); unreadCounts['global']=(unreadCounts['global']||0)+1; updateTitle();}).subscribe();
+    usersEl.innerHTML = '';
 
- if(window.privateChannel) window.privateChannel.unsubscribe();
- window.privateChannel=client.channel('public:private_messages')
-   .on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{
-     const m=payload.new;if(!currentUser) return;
-     if(m.sender!==currentUser.username && m.receiver!==currentUser.username){unreadCounts[m.sender]=(unreadCounts[m.sender]||0)+1; updateTitle();}
-     if(privateChatUser && (m.sender===privateChatUser || m.receiver===privateChatUser)) appendMessage({username:m.sender,message:m.message,created_at:m.created_at},m.sender===currentUser.username?'self':'other');
-   }).subscribe();
+    // users first
+    users.forEach(u=>{
+      if(u.username === currentUser.username) return;
+      const li = document.createElement('li');
+      const nameDiv = document.createElement('div'); nameDiv.className='user-name';
+      const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
+      left.appendChild(profileCircle(u.username));
+      const txt = document.createElement('span'); txt.textContent = u.username; left.appendChild(txt);
+      nameDiv.appendChild(left);
 
- if(window.groupChannel) window.groupChannel.unsubscribe();
- window.groupChannel=client.channel('public:group_messages')
-   .on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages'},payload=>{
-     const m=payload.new;if(!currentUser) return;
-     if(currentGroup && currentGroup.id===m.group_id) appendMessage({username:m.sender,message:m.message,created_at:m.created_at},m.sender===currentUser.username?'self':'other');
-     else { unreadCounts[m.group_id]=(unreadCounts[m.group_id]||0)+1; updateTitle(); }
-   }).subscribe();
-}
+      const meta = document.createElement('div'); meta.className='user-meta';
+      const notif = document.createElement('span'); notif.className='user-notif';
+      if(unreadCounts[u.username]) notif.textContent = '‼️New Message‼️';
+      meta.appendChild(notif);
+      nameDiv.appendChild(meta);
 
-function subscribeTyping(){
- if(window.typingChannel) window.typingChannel.unsubscribe();
- window.typingChannel=client.channel('public:typing_status')
-   .on('postgres_changes',{event:'*',schema:'public',table:'typing_status'},payload=>{
-     const {username,typing}=payload.new; if(!currentUser || username===currentUser.username) return;
-     if(typing) typingUsers.add(username); else typingUsers.delete(username); updateTypingIndicator();
-   }).subscribe();
-}
+      li.appendChild(nameDiv);
+      li.onclick = ()=>selectPrivateChat(u.username, li);
+      if(privateChatUser === u.username) li.classList.add('active');
+      usersEl.appendChild(li);
+    });
 
-// ---------- GROUP CREATION ----------
-groupButton.onclick=()=>{groupModal.style.display='flex'; searchUserInput.value=''; searchResults.innerHTML=''; selectedUsers=[];}
-cancelGroup.onclick=()=>{groupModal.style.display='none'; selectedUsers=[]; groupNameInput.value='';};
-let selectedUsers=[];
-searchUserInput.addEventListener('input',async()=>{
- const val=searchUserInput.value.toLowerCase(); searchResults.innerHTML='';
- if(!val) return;
- const {data,error}=await client.from('chat_codes').select('username').ilike('username',`%${val}%`);
- if(error) return console.error(error);
- data.forEach(u=>{
-  if(u.username===currentUser.username || selectedUsers.includes(u.username)) return;
-  const div=document.createElement('div'); div.className='group-user';
-  div.textContent=u.username;
-  const btn=document.createElement('button'); btn.textContent='Add'; btn.onclick=()=>{selectedUsers.push(u.username); div.classList.add('group-selected'); btn.disabled=true;};
-  div.appendChild(btn); searchResults.appendChild(div);
- });
-});
-createGroupSubmit.onclick=async()=>{
- if(!groupNameInput.value.trim() || selectedUsers.length===0) return alert('Enter name and add users');
- const {data,error}=await client.from('groups').insert([{name:groupNameInput.value.trim(),creator:currentUser.username}]).select().single();
- if(error) return console.error(error);
- const groupId=data.id;
- await client.from('group_members').insert(selectedUsers.map(u=>({group_id:groupId,username:u})));
- groupModal.style.display='none'; groupNameInput.value=''; selectedUsers=[]; await loadUsers();
-};
+    // then groups the user belongs to
+    (memberships||[]).forEach(m=>{
+      const g = m.groups;
+      if(!g) return;
+      const li = document.createElement('li');
+      const nameDiv = document.createElement('div'); nameDiv.className='user-name';
+      const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
+      left.appendChild(profileCircle(g.name));
+      const txt = document.createElement('span'); txt.textContent = g.name; left.appendChild(txt);
+      nameDiv.appendChild(left);
 
-setInterval(loadUsers,5000);
+      const meta = document.createElement('div'); meta.className='user-meta';
+      const notif = document.createElement('span'); notif.className='user-notif';
+      if(unreadCounts[g.id]) notif.textContent = '‼️New Message‼️';
+      meta.appendChild(notif);
+      nameDiv.appendChild(meta);
+
+      li.appendChild(nameDiv);
+      li.onclick = ()=>selectGroupChat(g, li);
+      if(currentGroup && currentGroup.id === g.id) li.classList.add('active');
+      usersEl.appendChild(li);
+    });
+
+    updateTitle();
+  }
+
+  // ---------- select chat ----------
+  async function selectPrivateChat(username, liElement){
+    privateChatUser = username;
+    currentGroup = null;
+    currentChatEl.textContent = username;
+    returnGlobalBtn.style.display = 'inline-block';
+    [...usersEl.children].forEach(li=>li.classList.remove('active'));
+    if(liElement) liElement.classList.add('active');
+    unreadCounts[username] = 0;
+    updateTitle();
+    await loadMessages();
+  }
+
+  async function selectGroupChat(group, liElement){
+    currentGroup = group;
+    privateChatUser = null;
+    currentChatEl.textContent = group.name;
+    returnGlobalBtn.style.display = 'inline-block';
+    [...usersEl.children].forEach(li=>li.classList.remove('active'));
+    if(liElement) liElement.classList.add('active');
+    unreadCounts[group.id] = 0;
+    updateTitle();
+    await loadMessages();
+  }
+
+  returnGlobalBtn.onclick = async () => {
+    privateChatUser = null;
+    currentGroup = null;
+    currentChatEl.textContent = 'Global Chat';
+    returnGlobalBtn.style.display = 'none';
+    [...usersEl.children].forEach(li=>li.classList.remove('active'));
+    await loadMessages();
+  };
+
+  // ---------- load messages ----------
+  async function loadMessages(){
+    clearMessages();
+    if(!currentUser) return;
+    if(privateChatUser){
+      const q = client.from('private_messages')
+        .select('*')
+        .or(`and(sender.eq.${currentUser.username},receiver.eq.${privateChatUser}),and(sender.eq.${privateChatUser},receiver.eq.${currentUser.username})`)
+        .order('created_at',{ascending:true});
+      const { data } = await q;
+      (data||[]).forEach(m => appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other'));
+      return;
+    }
+    if(currentGroup){
+      const { data } = await client.from('group_messages').select('*').eq('group_id', currentGroup.id).order('created_at',{ascending:true});
+      (data||[]).forEach(m => appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other'));
+      return;
+    }
+    // global
+    const { data } = await client.from('global_messages').select('*').order('created_at',{ascending:true});
+    (data||[]).forEach(m => appendMessageObj({ who: m.username, text: m.message, at: m.created_at }, m.username === currentUser.username ? 'self' : 'other'));
+  }
+
+  // ---------- send message (no local append; rely on realtime) ----------
+  sendBtn.onclick = sendMessage;
+  messageInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
+
+  async function sendMessage(){
+    const text = messageInput.value.trim();
+    if(!text || !currentUser) return;
+    const now = new Date().toISOString();
+
+    try{
+      if(privateChatUser){
+        await client.from('private_messages').insert([{ sender: currentUser.username, receiver: privateChatUser, message: text, created_at: now }]);
+      } else if(currentGroup){
+        await client.from('group_messages').insert([{ group_id: currentGroup.id, sender: currentUser.username, message: text, created_at: now }]);
+      } else {
+        await client.from('global_messages').insert([{ username: currentUser.username, message: text, created_at: now }]);
+      }
+    }catch(err){ console.error('send error', err); }
+    messageInput.value = '';
+    // set typing false
+    await client.from('typing_status').upsert({ username: currentUser.username, typing: false, updated_at: new Date().toISOString() });
+  }
+
+  // ---------- typing ----------
+  messageInput.addEventListener('input', async () => {
+    if(!currentUser) return;
+    await client.from('typing_status').upsert({ username: currentUser.username, typing: true, updated_at: new Date().toISOString() });
+    clearTimeout(window._typingTO);
+    window._typingTO = setTimeout(async () => {
+      await client.from('typing_status').upsert({ username: currentUser.username, typing: false, updated_at: new Date().toISOString() });
+    }, 1600);
+  });
+
+  // ---------- realtime subscriptions ----------
+  function subscribeAll(){
+    // global messages
+    if(window._globalSub) window._globalSub.unsubscribe();
+    window._globalSub = client.channel('public:global_messages')
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'global_messages' }, payload => {
+        const m = payload.new;
+        if(!currentUser) return;
+        // append only when viewing global
+        if(!currentGroup && !privateChatUser){
+          appendMessageObj({ who: m.username, text: m.message, at: m.created_at }, m.username === currentUser.username ? 'self' : 'other');
+        }
+        // increment unread if not viewing global and not sent by self
+        if( (currentGroup || privateChatUser) && m.username !== currentUser.username ){
+          unreadCounts['global'] = (unreadCounts['global'] || 0) + 1;
+          updateTitle();
+          // update small badge by reloading users list (cheap)
+          loadUsersAndGroups().catch(()=>{});
+        }
+      }).subscribe();
+
+    // private messages
+    if(window._privateSub) window._privateSub.unsubscribe();
+    window._privateSub = client.channel('public:private_messages')
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'private_messages' }, payload => {
+        const m = payload.new;
+        if(!currentUser) return;
+        // message relevant to me?
+        if(m.receiver === currentUser.username || m.sender === currentUser.username){
+          // if viewing that private chat, append
+          if(privateChatUser && ( (m.sender === privateChatUser && m.receiver === currentUser.username) || (m.sender === currentUser.username && m.receiver === privateChatUser) )){
+            appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other');
+          } else {
+            // not viewing that DM -> increment unread for sender if I am receiver
+            if(m.receiver === currentUser.username && m.sender !== currentUser.username){
+              unreadCounts[m.sender] = (unreadCounts[m.sender] || 0) + 1;
+              updateTitle();
+              // update user list badges
+              loadUsersAndGroups().catch(()=>{});
+            }
+          }
+        }
+      }).subscribe();
+
+    // group messages
+    if(window._groupSub) window._groupSub.unsubscribe();
+    window._groupSub = client.channel('public:group_messages')
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'group_messages' }, payload => {
+        const m = payload.new;
+        if(!currentUser) return;
+        if(currentGroup && currentGroup.id === m.group_id){
+          appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other');
+        } else {
+          // increment unread for that group (if I'm not viewing it)
+          if(m.sender !== currentUser.username){
+            unreadCounts[m.group_id] = (unreadCounts[m.group_id] || 0) + 1;
+            updateTitle();
+            loadUsersAndGroups().catch(()=>{});
+          }
+        }
+      }).subscribe();
+  }
+
+  // typing subscription
+  function subscribeTyping(){
+    if(window._typingSub) window._typingSub.unsubscribe();
+    window._typingSub = client.channel('public:typing_status')
+      .on('postgres_changes', { event:'*', schema:'public', table:'typing_status' }, payload => {
+        const { username, typing } = payload.new;
+        if(!currentUser || username === currentUser.username) return;
+        if(typing) window._typingSet = window._typingSet || new Set(), window._typingSet.add(username);
+        else (window._typingSet || new Set()).delete(username);
+        // show typing if they are in current chat (simple approach)
+        if(privateChatUser && window._typingSet && window._typingSet.has(privateChatUser)){
+          document.getElementById('typingIndicator').textContent = `${privateChatUser} is typing...`;
+        } else if(currentGroup){
+          // if any group member typing (we don't fetch group members here for performance),
+          // show generic "Someone is typing..." when any typing exists (excluding currentUser)
+          const anyTyping = Array.from(window._typingSet || []).length > 0;
+          document.getElementById('typingIndicator').textContent = anyTyping ? 'Someone is typing...' : '';
+        } else {
+          document.getElementById('typingIndicator').textContent = '';
+        }
+      }).subscribe();
+  }
+
+  // ---------- group creation UI ----------
+  groupButton.onclick = () => {
+    if(!currentUser) return alert('Login first');
+    selectedUsers = [];
+    selectedUsersWrap.innerHTML = '';
+    searchUserInput.value = '';
+    searchResults.innerHTML = '';
+    groupNameInput.value = '';
+    groupModal.style.display = 'flex';
+  };
+  closeGroupModal.onclick = () => { groupModal.style.display = 'none'; };
+  cancelGroupBtn.onclick = () => { groupModal.style.display = 'none'; };
+
+  function renderSelectedPills(){
+    selectedUsersWrap.innerHTML = '';
+    selectedUsers.forEach(u=>{
+      const pill = document.createElement('span');
+      pill.className = 'selected-pill small';
+      pill.textContent = u + ' ✖';
+      pill.onclick = () => {
+        selectedUsers = selectedUsers.filter(x => x !== u);
+        renderSelectedPills();
+        searchUsers(searchUserInput.value);
+      };
+      selectedUsersWrap.appendChild(pill);
+    });
+  }
+
+  async function searchUsers(query){
+    searchResults.innerHTML = '';
+    const q = (query||'').trim();
+    if(!q) return;
+    const { data } = await client.from('chat_codes').select('username').ilike('username', `%${q}%`).limit(20);
+    (data||[]).forEach(u=>{
+      if(u.username === currentUser.username) return;
+      if(selectedUsers.includes(u.username)) return;
+      const row = document.createElement('div');
+      row.className = 'group-user';
+      const name = document.createElement('div'); name.textContent = u.username;
+      const btn = document.createElement('button'); btn.textContent = 'Add';
+      btn.onclick = () => { selectedUsers.push(u.username); renderSelectedPills(); searchUsers(query); };
+      row.appendChild(name); row.appendChild(btn);
+      searchResults.appendChild(row);
+    });
+  }
+
+  searchUserInput.addEventListener('input', e => searchUsers(e.target.value));
+
+  createGroupSubmit.onclick = async () => {
+    const name = groupNameInput.value.trim();
+    if(!name) return alert('Enter a group name');
+    if(selectedUsers.length === 0) return alert('Add at least one user');
+    // create group and add members (including creator)
+    try{
+      const { data: group } = await client.from('groups').insert([{ name, creator: currentUser.username }]).select().single();
+      const members = selectedUsers.map(u => ({ group_id: group.id, username: u }));
+      members.push({ group_id: group.id, username: currentUser.username });
+      await client.from('group_members').insert(members);
+      groupModal.style.display = 'none';
+      selectedUsers = [];
+      await loadUsersAndGroups();
+    }catch(err){ console.error('create group error', err); alert('Failed to create group'); }
+  };
+
+  // update list regularly (or on events)
+  setInterval(()=>{ if(currentUser) loadUsersAndGroups(); }, 12000);
+
+  // initial: nothing until login
+  // Expose a few helpers for debugging in console (optional)
+  window._bhc = { client, loadUsersAndGroups, loadMessages, subscribeAll };
+
 });
 </script>
 </body>
