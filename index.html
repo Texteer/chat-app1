@@ -1,270 +1,452 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BHC Chat with Groups Fixed</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BHC Chat — Groups Fixed</title>
 <style>
-body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#fff; height:100vh; display:flex; flex-direction:column; }
-header { background:#0f1524; padding:1rem; display:flex; justify-content:space-between; align-items:center; font-size:1.5rem; font-weight:bold; }
-#currentChat { font-size:0.9rem; color:#7a7a7a; }
-#returnGlobalBtn { display:none; background:#0b78e3; color:#fff; border:none; border-radius:5px; padding:0.3rem 0.6rem; cursor:pointer; }
-#chatContainer { display:flex; flex:1; overflow:hidden; }
-#userList { width:220px; border-right:1px solid #1c2335; overflow-y:auto; padding:0.5rem; }
-#userList h3 { display:flex; justify-content:space-between; align-items:center; margin-top:0; margin-bottom:0.5rem; }
-#userList ul { list-style:none; padding:0; margin:0; }
-#userList li { padding:0.5rem; cursor:pointer; border-radius:5px; display:flex; align-items:center; gap:0.5rem; }
-#userList li:hover { background:#1c2335; }
-#userList li.active { background:#0b78e3; }
-.chatMain { display:flex; flex-direction:column; flex:1; }
-#typingIndicator { font-size:0.85rem; color:#7a7a7a; padding-left:1rem; margin-bottom:0.2rem; height:18px; }
-#messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; background:#101426; }
-.message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; display:flex; align-items:center; }
-.message.self { background:#0b78e3; align-self:flex-end; color:#fff; flex-direction:row-reverse; }
-.message.other { background:#1c2335; align-self:flex-start; color:#fff; }
-.timestamp { font-size:0.65rem; color:#7a7a7a; margin-left:0.5rem; margin-right:0.5rem; }
-#input { display:flex; padding:0.5rem; background:#141a2c; border-top:1px solid #1c2335; }
-#input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#101426; color:#fff; }
-#input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
-#authModal, #createGroupModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:10; }
-#authBox, #createGroupBox { background:#101426; padding:2rem; border-radius:15px; width:400px; max-height:80%; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5); overflow-y:auto; position:relative; }
-#authBox input, #createGroupBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
-#authBox button, #createGroupBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; }
-.profile-circle { display:inline-flex; justify-content:center; align-items:center; width:30px; height:30px; border-radius:50%; color:#fff; font-weight:bold; font-size:0.8rem; flex-shrink:0; }
-#openGroupModalBtn { background:#0b78e3; color:#fff; border:none; border-radius:5px; padding:0.2rem 0.5rem; cursor:pointer; font-size:0.8rem; }
-#selectedMembers { display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem; }
-.member-tag { background:#0b78e3; padding:0.2rem 0.5rem; border-radius:5px; display:flex; align-items:center; gap:0.3rem; }
-.member-tag button { background:transparent; border:none; color:#fff; cursor:pointer; font-weight:bold; }
-#searchUserInput { padding:0.4rem; margin-bottom:0.5rem; border-radius:5px; border:none; background:#141a2c; color:#fff; }
-.user-search-result { display:flex; justify-content:space-between; padding:0.3rem; border-radius:5px; cursor:pointer; }
-.user-search-result:hover { background:#1c2335; }
-.closeModal { position:absolute; top:0.5rem; right:0.5rem; background:#0b78e3; border:none; color:#fff; font-size:1rem; border-radius:50%; width:25px; height:25px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  :root{--bg:#0a0f1a;--panel:#101426;--muted:#7a7a7a;--accent:#0b78e3;--card:#1c2335}
+  body{margin:0;font-family:Segoe UI,system-ui,-apple-system,Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#fff;height:100vh;display:flex;flex-direction:column}
+  header{background:#0f1524;padding:1rem;display:flex;align-items:center;justify-content:space-between}
+  #currentChat{font-size:0.95rem;color:var(--muted)}
+  #returnGlobalBtn{display:none;background:var(--accent);border:none;color:#fff;border-radius:6px;padding:6px 10px;cursor:pointer}
+  #chatContainer{display:flex;flex:1;overflow:hidden}
+  #userList{width:240px;border-right:1px solid #1c2335;overflow:auto;padding:0.5rem}
+  #userList h3{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px 0}
+  #openGroupModalBtn{background:var(--accent);border:none;color:#fff;border-radius:6px;padding:6px 8px;cursor:pointer;font-size:0.85rem}
+  ul.list{list-style:none;padding:0;margin:0}
+  ul.list li{display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;cursor:pointer}
+  ul.list li:hover{background:var(--card)}
+  ul.list li.active{background:var(--accent)}
+  .profile-circle{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;font-weight:700;font-size:0.85rem;color:#fff;flex-shrink:0}
+  .chatMain{flex:1;display:flex;flex-direction:column}
+  #typingIndicator{height:18px;padding:8px 12px;color:var(--muted);font-size:0.85rem}
+  #messages{flex:1;padding:14px;overflow:auto;display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+  .message{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;max-width:70%;word-break:break-word}
+  .message.self{margin-left:auto;background:var(--accent);flex-direction:row-reverse}
+  .message.other{margin-right:auto;background:var(--card)}
+  .timestamp{font-size:0.65rem;color:var(--muted);margin-left:6px;margin-right:6px}
+  #input{display:flex;padding:10px;background:#141a2c;border-top:1px solid #1c2335}
+  #messageInput{flex:1;padding:10px;border-radius:20px 0 0 20px;border:none;background:#101426;color:#fff}
+  #sendBtn{padding:10px 14px;border:none;border-radius:0 20px 20px 0;background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
+  /* modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:50}
+  .modal{background:var(--panel);padding:18px;border-radius:12px;width:420px;max-height:80vh;overflow:auto;position:relative}
+  .closeModal{position:absolute;right:12px;top:12px;background:var(--accent);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer}
+  .user-search-result{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px}
+  .user-search-result:hover{background:var(--card)}
+  #selectedMembers{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .member-tag{background:var(--accent);padding:4px 8px;border-radius:999px;display:flex;align-items:center;gap:6px}
+  .member-tag button{background:transparent;border:none;color:#fff;cursor:pointer}
 </style>
 </head>
 <body>
+  <header>
+    <div style="display:flex;align-items:center;gap:12px">
+      <strong>BHC Chat</strong>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span id="currentChat">Global Chat</span>
+      <button id="returnGlobalBtn">Global Chat</button>
+    </div>
+  </header>
 
-<header>
-  <span>BHC Chat</span>
-  <span id="currentChat">Global Chat</span>
-  <button id="returnGlobalBtn">Global Chat</button>
-</header>
+  <div id="chatContainer">
+    <aside id="userList">
+      <h3>
+        Users
+        <button id="openGroupModalBtn">+ Group</button>
+      </h3>
 
-<div id="chatContainer">
-  <div id="userList">
-    <h3>
-      Users
-      <button id="openGroupModalBtn">+ Group</button>
-    </h3>
-    <ul id="users"></ul>
+      <ul id="users" class="list"></ul>
+    </aside>
+
+    <main class="chatMain">
+      <div id="typingIndicator"></div>
+      <div id="messages"></div>
+      <div id="input">
+        <input id="messageInput" placeholder="Type your message..." autocomplete="off" />
+        <button id="sendBtn">Send</button>
+      </div>
+    </main>
   </div>
-  <div class="chatMain">
-    <div id="typingIndicator"></div>
-    <div id="messages"></div>
-    <div id="input">
-      <input type="text" id="messageInput" placeholder="Type your message...">
-      <button id="sendBtn">Send</button>
+
+  <!-- auth modal -->
+  <div id="authModal" class="modal-backdrop">
+    <div class="modal" id="authBox">
+      <h2>Enter Code</h2>
+      <input id="codeInput" placeholder="Enter your code" />
+      <button id="loginBtn">Enter Chat</button>
     </div>
   </div>
-</div>
 
-<div id="authModal">
-  <div id="authBox">
-    <h2>Enter Code</h2>
-    <input type="text" id="codeInput" placeholder="Enter your code">
-    <button id="loginBtn">Enter Chat</button>
+  <!-- create group modal -->
+  <div id="createGroupModal" class="modal-backdrop" style="display:none">
+    <div class="modal" id="createGroupBox">
+      <button class="closeModal">&times;</button>
+      <h2>Create Group</h2>
+      <input id="groupNameInput" placeholder="Group name" />
+      <input id="searchUserInput" placeholder="Search users to add" />
+      <div id="searchResults"></div>
+      <div id="selectedMembers"></div>
+      <button id="createGroupSubmit">Create Group</button>
+    </div>
   </div>
-</div>
 
-<div id="createGroupModal" style="display:none;">
-  <div id="createGroupBox">
-    <button class="closeModal">&times;</button>
-    <h2>Create Group</h2>
-    <input type="text" id="groupNameInput" placeholder="Group Name">
-    <input type="text" id="searchUserInput" placeholder="Search users to add">
-    <div id="searchResults"></div>
-    <div id="selectedMembers"></div>
-    <button id="createGroupSubmit">Create Group</button>
-  </div>
-</div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+    const supabase = window.supabase; // lib loaded
+    const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-document.addEventListener('DOMContentLoaded', ()=>{
-const supabaseUrl='https://azpgwbxillscpwrraprl.supabase.co';
-const supabaseKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
-const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
+    // state
+    let currentUser = null;          // { username }
+    let currentChatUser = null;      // username string (private DM)
+    let currentGroupId = null;       // group id (number)
+    let availableUsers = [];         // list of {username}
+    let selectedMembers = [];        // during group creation
+    let typingUsers = new Set();
 
-let currentUser=null,currentChatUser=null,currentGroupId=null;
-let typingUsers=new Set(),typingTimeout;
-let availableUsers=[],selectedMembers=[];
-let groupChannel=null;
+    // ui refs
+    const authModal = document.getElementById('authModal');
+    const codeInput = document.getElementById('codeInput');
+    const loginBtn = document.getElementById('loginBtn');
 
-const messagesEl=document.getElementById('messages');
-const messageInput=document.getElementById('messageInput');
-const sendBtn=document.getElementById('sendBtn');
-const codeInput=document.getElementById('codeInput');
-const loginBtn=document.getElementById('loginBtn');
-const authModal=document.getElementById('authModal');
-const typingIndicator=document.getElementById('typingIndicator');
-const usersEl=document.getElementById('users');
-const currentChatEl=document.getElementById('currentChat');
-const returnGlobalBtn=document.getElementById('returnGlobalBtn');
-const openGroupModalBtn=document.getElementById('openGroupModalBtn');
-const createGroupModal=document.getElementById('createGroupModal');
-const groupNameInput=document.getElementById('groupNameInput');
-const searchUserInput=document.getElementById('searchUserInput');
-const searchResults=document.getElementById('searchResults');
-const selectedMembersDiv=document.getElementById('selectedMembers');
-const createGroupSubmit=document.getElementById('createGroupSubmit');
-const closeModalBtn=document.querySelector('.closeModal');
+    const usersEl = document.getElementById('users');
+    const messagesEl = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const currentChatEl = document.getElementById('currentChat');
+    const returnGlobalBtn = document.getElementById('returnGlobalBtn');
 
-function getInitials(name){return name.split(' ').map(n=>n[0].toUpperCase()).join('').slice(0,2);}
-function stringToColor(str){let hash=0;for(let i=0;i<str.length;i++){hash=str.charCodeAt(i)+((hash<<5)-hash);}return `hsl(${hash%360},70%,50%)`;}
-function createProfileCircle(name){const span=document.createElement('span'); span.className='profile-circle'; span.style.background=stringToColor(name); span.textContent=getInitials(name); return span;}
-function appendMessage(message,type){const div=document.createElement('div'); div.className='message '+type; div.appendChild(createProfileCircle(message.username)); const content=document.createElement('span'); content.innerHTML=`<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`; div.appendChild(content); messagesEl.appendChild(div); messagesEl.scrollTop=messagesEl.scrollHeight;}
-function updateTypingIndicator(){typingIndicator.textContent=typingUsers.size===0?'':Array.from(typingUsers).join(' and ')+' is typing...';}
+    const openGroupModalBtn = document.getElementById('openGroupModalBtn');
+    const createGroupModal = document.getElementById('createGroupModal');
+    const closeModalBtn = createGroupModal.querySelector('.closeModal');
+    const groupNameInput = document.getElementById('groupNameInput');
+    const searchUserInput = document.getElementById('searchUserInput');
+    const searchResults = document.getElementById('searchResults');
+    const selectedMembersDiv = document.getElementById('selectedMembers');
+    const createGroupSubmit = document.getElementById('createGroupSubmit');
 
-// ---------------- LOGIN ----------------
-async function loginWithCode(code){
-  try{
-    const { data,error }=await supabaseClient.from('chat_codes').select('username').eq('code',code).single();
-    if(error||!data){alert('Invalid code');return false;}
-    currentUser={username:data.username,code};
-    localStorage.setItem('chatCode',code);
-    authModal.style.display='none';
-    await loadUsers();
-    await loadMessages();
-    subscribeAll();
-    return true;
-  }catch(e){console.error(e);alert('Login failed');return false;}
-}
-loginBtn.onclick=()=>{const code=codeInput.value.trim(); if(!code) return alert('Enter code'); loginWithCode(code);}
-const savedCode=localStorage.getItem('chatCode'); if(savedCode) loginWithCode(savedCode);
+    // helpers
+    function initials(name){ return name.split(' ').map(n=>n[0]?.toUpperCase()||'').join('').slice(0,2); }
+    function colorFor(name){ let h=0; for(let i=0;i<name.length;i++) h = name.charCodeAt(i) + ((h<<5)-h); return `hsl(${Math.abs(h)%360} 70% 50%)`; }
+    function profileCircle(name){ const s=document.createElement('span'); s.className='profile-circle'; s.style.background=colorFor(name); s.textContent=initials(name); return s; }
 
-// ---------------- USERS ----------------
-async function loadUsers(){
-  const { data }=await supabaseClient.from('chat_codes').select('*').order('username',{ascending:true});
-  availableUsers=data.filter(u=>u.username!==currentUser.username);
-  renderUserList();
-}
-function renderUserList(){
-  usersEl.innerHTML='';
-  availableUsers.forEach(u=>{
-    const li=document.createElement('li');
-    li.appendChild(createProfileCircle(u.username));
-    const span=document.createElement('span'); span.textContent=u.username; li.appendChild(span);
-    li.onclick=()=>{currentChatUser=u.username; currentGroupId=null; currentChatEl.textContent=u.username; [...usersEl.children].forEach(item=>item.classList.remove('active')); li.classList.add('active'); loadMessages();}
-    usersEl.appendChild(li);
-  });
-  // Load groups
-  supabaseClient.from('groups').select('*').then(res=>{
-    res.data.forEach(g=>{
-      const li=document.createElement('li');
-      li.appendChild(createProfileCircle(g.name));
-      const span=document.createElement('span'); span.textContent=g.name; li.appendChild(span);
-      li.onclick=()=>selectGroupChat(g.id,g.name,li);
-      usersEl.appendChild(li);
+    function clearMessages(){ messagesEl.innerHTML = ''; messagesEl.scrollTop = 0; }
+
+    // append message (called only by subscriptions and loadMessages)
+    function appendMessageObj({who, text, at}, type){
+      const div = document.createElement('div');
+      div.className = 'message ' + (type === 'self' ? 'self' : 'other');
+      div.appendChild(profileCircle(who));
+      const span = document.createElement('span');
+      span.innerHTML = `<strong>${who}</strong>: ${text} <span class="timestamp">${new Date(at).toLocaleTimeString()}</span>`;
+      div.appendChild(span);
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // UI: render user + group merged list
+    async function loadUsersAndGroups(){
+      if(!currentUser) return;
+      // users
+      const { data: usersData, error: uerr } = await client.from('chat_codes').select('username').order('username',{ascending:true});
+      if(uerr) { console.error(uerr); return; }
+      availableUsers = usersData.filter(u => u.username !== currentUser.username);
+
+      // groups where current user is a member
+      const { data: membership, error: gmerr } = await client
+        .from('group_members')
+        .select('group_id,groups(id,name)')
+        .eq('username', currentUser.username);
+      if(gmerr) { console.error(gmerr); return; }
+
+      // merged list: users first, then groups
+      usersEl.innerHTML = '';
+      // users
+      availableUsers.forEach(u => {
+        const li = document.createElement('li');
+        li.appendChild(profileCircle(u.username));
+        const span = document.createElement('span'); span.textContent = u.username;
+        li.appendChild(span);
+        li.onclick = () => {
+          currentChatUser = u.username;
+          currentGroupId = null;
+          currentChatEl.textContent = u.username;
+          highlightActive(u.username, null);
+          clearMessages();
+          loadMessages();
+        };
+        usersEl.appendChild(li);
+      });
+      // groups
+      if(Array.isArray(membership)){
+        membership.forEach(g => {
+          const name = g.groups.name;
+          const id = g.group_id;
+          const li = document.createElement('li');
+          li.appendChild(profileCircle(name));
+          const span = document.createElement('span'); span.textContent = name;
+          li.appendChild(span);
+          li.onclick = () => {
+            selectGroupChat(id, name, li);
+          };
+          usersEl.appendChild(li);
+        });
+      }
+    }
+
+    function highlightActive(userName, groupId){
+      [...usersEl.children].forEach(li => li.classList.remove('active'));
+      // Called by the caller to set active class, they pass element directly if needed
+
+      // fallback: try find by text
+      for(const li of usersEl.children){
+        const txt = li.querySelector('span')?.textContent;
+        if(userName && txt === userName) { li.classList.add('active'); break; }
+        if(groupId && txt) {
+          // nothing to do here; callers who have element pass it
+        }
+      }
+    }
+
+    // selecting a group: set state, unsubscribe old channel, load messages & rely on realtime to append new messages
+    async function selectGroupChat(groupId, groupName, liElement){
+      currentGroupId = groupId;
+      currentChatUser = null;
+      currentChatEl.textContent = groupName;
+      returnGlobalBtn.style.display = 'inline-block';
+      [...usersEl.children].forEach(li => li.classList.remove('active'));
+      if(liElement) liElement.classList.add('active');
+
+      clearMessages();
+      // load messages for this group
+      await loadMessages();
+
+      // group realtime subscription handled in subscribeAll (the handler appends only for currentGroupId)
+    }
+
+    // create group modal control
+    openGroupModalBtn.onclick = () => {
+      if(!currentUser) return alert('Login first');
+      selectedMembers = [];
+      selectedMembersDiv.innerHTML = '';
+      searchResults.innerHTML = '';
+      groupNameInput.value = '';
+      searchUserInput.value = '';
+      createGroupModal.style.display = 'flex';
+    };
+    closeModalBtn.onclick = () => {
+      createGroupModal.style.display = 'none';
+      selectedMembers = [];
+      selectedMembersDiv.innerHTML = '';
+      searchResults.innerHTML = '';
+    };
+
+    // search users — show nothing until there is a query
+    searchUserInput.addEventListener('input', () => {
+      const q = searchUserInput.value.trim().toLowerCase();
+      searchResults.innerHTML = '';
+      if(!q) return;
+      availableUsers.filter(u => u.username.toLowerCase().includes(q) && !selectedMembers.includes(u.username)).forEach(u => {
+        const div = document.createElement('div');
+        div.className = 'user-search-result';
+        const span = document.createElement('span'); span.textContent = u.username;
+        const btn = document.createElement('button'); btn.textContent = 'Add';
+        btn.onclick = () => { selectedMembers.push(u.username); renderSelectedMembers(); div.remove(); };
+        div.appendChild(span); div.appendChild(btn);
+        searchResults.appendChild(div);
+      });
     });
+
+    function renderSelectedMembers(){
+      selectedMembersDiv.innerHTML = '';
+      selectedMembers.forEach(name => {
+        const d = document.createElement('div'); d.className = 'member-tag';
+        d.textContent = name;
+        const btn = document.createElement('button'); btn.textContent = 'x';
+        btn.onclick = () => { selectedMembers = selectedMembers.filter(x => x !== name); renderSelectedMembers(); };
+        d.appendChild(btn);
+        selectedMembersDiv.appendChild(d);
+      });
+    }
+
+    // create group — add creator automatically
+    createGroupSubmit.onclick = async () => {
+      const name = groupNameInput.value.trim();
+      if(!name) return alert('Enter a group name');
+      // at least one other member needed? allow group of 2+ including creator
+      if(selectedMembers.length === 0) return alert('Add at least one member');
+
+      try{
+        const { data: group, error: gerr } = await client.from('groups').insert({ name }).select().single();
+        if(gerr) throw gerr;
+        const members = [...selectedMembers, currentUser.username].map(u => ({ group_id: group.id, username: u }));
+        const { error: merr } = await client.from('group_members').insert(members);
+        if(merr) throw merr;
+        // close & refresh user list
+        createGroupModal.style.display = 'none';
+        selectedMembers = [];
+        await loadUsersAndGroups();
+      }catch(e){
+        console.error(e);
+        alert('Failed to create group');
+      }
+    };
+
+    // SEND MESSAGE: only insert into DB. DO NOT append locally — subscriptions will append with correct styling.
+    sendBtn.onclick = sendMessage;
+    messageInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
+
+    async function sendMessage(){
+      const msg = messageInput.value.trim();
+      if(!msg || !currentUser) return;
+      const at = new Date().toISOString();
+
+      try{
+        if(currentGroupId){
+          await client.from('group_messages').insert([{ group_id: currentGroupId, sender: currentUser.username, message: msg, created_at: at }]);
+        } else if(currentChatUser){
+          await client.from('private_messages').insert([{ sender: currentUser.username, receiver: currentChatUser, message: msg, created_at: at }]);
+        } else {
+          await client.from('global_messages').insert([{ username: currentUser.username, message: msg, created_at: at }]);
+        }
+      }catch(err){
+        console.error('send error', err);
+      } finally {
+        messageInput.value = '';
+        // update typing -> false
+        await client.from('typing_status').upsert({ username: currentUser.username, typing: false, updated_at: new Date().toISOString() });
+      }
+    }
+
+    // typing indicator update
+    messageInput.addEventListener('input', async () => {
+      if(!currentUser) return;
+      await client.from('typing_status').upsert({ username: currentUser.username, typing: true, updated_at: new Date().toISOString() });
+      clearTimeout(window._typingTO);
+      window._typingTO = setTimeout(async () => {
+        await client.from('typing_status').upsert({ username: currentUser.username, typing: false, updated_at: new Date().toISOString() });
+      }, 1800);
+    });
+
+    // LOAD MESSAGES depending on context
+    async function loadMessages(){
+      clearMessages();
+      try{
+        if(currentGroupId){
+          const { data, error } = await client.from('group_messages').select('*').eq('group_id', currentGroupId).order('created_at',{ascending:true});
+          if(error) { console.error(error); return; }
+          data.forEach(m => appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other'));
+          return;
+        }
+        if(currentChatUser){
+          const { data, error } = await client.from('private_messages').select('*')
+            .or(`and(sender.eq.${currentUser.username},receiver.eq.${currentChatUser}),and(sender.eq.${currentChatUser},receiver.eq.${currentUser.username})`)
+            .order('created_at',{ascending:true});
+          if(error) { console.error(error); return; }
+          data.forEach(m => appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other'));
+          return;
+        }
+        // global
+        const { data, error } = await client.from('global_messages').select('*').order('created_at',{ascending:true});
+        if(error) { console.error(error); return; }
+        data.forEach(m => appendMessageObj({ who: m.username, text: m.message, at: m.created_at }, m.username === currentUser.username ? 'self' : 'other'));
+      }catch(e){ console.error(e); }
+    }
+
+    // SUBSCRIPTIONS: global / private / group / typing
+    function subscribeRealtime(){
+      // unsubscribe first
+      if(window._globalSub) window._globalSub.unsubscribe();
+      if(window._privateSub) window._privateSub.unsubscribe();
+      if(window._groupSub) window._groupSub.unsubscribe();
+      if(window._typingSub) window._typingSub.unsubscribe();
+
+      // global messages -> only when viewing global
+      window._globalSub = client.channel('public:global_messages')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'global_messages' }, payload => {
+          const m = payload.new;
+          // show only if currently viewing global
+          if(!currentUser) return;
+          if(currentGroupId || currentChatUser) return;
+          appendMessageObj({ who: m.username, text: m.message, at: m.created_at }, m.username === currentUser.username ? 'self' : 'other');
+        }).subscribe();
+
+      // private messages -> append only when viewing the correct private chat
+      window._privateSub = client.channel('public:private_messages')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'private_messages' }, payload => {
+          const m = payload.new;
+          if(!currentUser) return;
+          // append only if we're viewing the DM between currentUser <-> currentChatUser
+          if(!currentChatUser) return;
+          const isBetween = (m.sender === currentChatUser && m.receiver === currentUser.username) || (m.sender === currentUser.username && m.receiver === currentChatUser);
+          if(!isBetween) return;
+          appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other');
+        }).subscribe();
+
+      // group messages -> append only if viewing that group
+      window._groupSub = client.channel('public:group_messages')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages' }, payload => {
+          const m = payload.new;
+          if(!currentUser) return;
+          if(!currentGroupId) return;
+          if(m.group_id !== currentGroupId) return;
+          appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other');
+        }).subscribe();
+
+      // typing status -> update indicator (simple)
+      window._typingSub = client.channel('public:typing_status')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'typing_status' }, payload => {
+          const { username, typing } = payload.new;
+          if(!currentUser) return;
+          if(username === currentUser.username) return;
+          if(typing) typingUsers.add(username); else typingUsers.delete(username);
+          // show typing only if relevant context: global or private (we'll keep simple and show any)
+          const arr = Array.from(typingUsers);
+          document.getElementById('typingIndicator').textContent = arr.length ? (arr.join(' and ') + ' is typing...') : '';
+        }).subscribe();
+    }
+
+    // LOGIN flow
+    async function doLogin(code){
+      const { data, error } = await client.from('chat_codes').select('username').eq('code', code).single();
+      if(error || !data) { alert('Invalid code'); return; }
+      currentUser = { username: data.username };
+      authModal.style.display = 'none';
+      await loadUsersAndGroups();
+      await loadMessages();
+      subscribeRealtime();
+      // poll/update users/groups occasionally
+      setInterval(loadUsersAndGroups, 8000);
+    }
+
+    loginBtn.onclick = () => {
+      const code = codeInput.value.trim();
+      if(!code) return alert('Enter your code');
+      doLogin(code);
+    };
+
+    // restore saved code
+    const saved = localStorage.getItem('chatCode');
+    if(saved) {
+      codeInput.value = saved;
+      doLogin(saved).catch(()=>{/*ignore*/});
+    }
+
+    // make sure create group modal closes on backdrop click or close
+    createGroupModal.addEventListener('click', (e) => {
+      if(e.target === createGroupModal) { createGroupModal.style.display = 'none'; selectedMembers = []; renderSelectedMembers(); }
+    });
+
+    // load initial users+groups when logged in is handled above
+
+    // ensure when switching views we reload & ensure subscriptions append only when relevant
+    // whenever we change currentGroupId/currentChatUser, re-run loadMessages (we already call it on selection)
   });
-}
-
-// ---------------- GROUP CHAT ----------------
-function selectGroupChat(groupId,groupName,li){
-  currentGroupId=groupId; currentChatUser=null; currentChatEl.textContent=groupName;
-  [...usersEl.children].forEach(item=>item.classList.remove('active')); if(li) li.classList.add('active');
-  messagesEl.innerHTML='';
-  if(groupChannel) groupChannel.unsubscribe();
-  groupChannel=supabaseClient.channel('public:group_messages:'+groupId)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages'},payload=>{
-      const m=payload.new; if(m.group_id!==currentGroupId) return; if(m.sender===currentUser.username) return;
-      appendMessage({username:m.sender,message:m.message,created_at:m.created_at},'other');
-    }).subscribe();
-  loadMessages();
-}
-
-// ---------------- SEND ----------------
-async function sendMessage(){
-  const msg=messageInput.value.trim(); if(!msg||!currentUser) return;
-  messageInput.value='';
-  if(currentGroupId){
-    const m={group_id:currentGroupId,sender:currentUser.username,message:msg,created_at:new Date().toISOString()};
-    appendMessage({username:currentUser.username,message:msg,created_at:m.created_at},'self');
-    await supabaseClient.from('group_messages').insert([m]);
-  } else if(currentChatUser){
-    const m={sender:currentUser.username,receiver:currentChatUser,message:msg,created_at:new Date().toISOString()};
-    appendMessage({username:currentUser.username,message:msg,created_at:m.created_at},'self');
-    await supabaseClient.from('private_messages').insert([m]);
-  } else {
-    const m={username:currentUser.username,message:msg,created_at:new Date().toISOString()};
-    appendMessage(m,'self'); await supabaseClient.from('global_messages').insert([m]);
-  }
-  await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});
-}
-sendBtn.onclick=sendMessage; messageInput.addEventListener('keypress',e=>{if(e.key==='Enter') sendMessage();});
-messageInput.addEventListener('input',async()=>{
-  if(!currentUser) return;
-  await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:true,updated_at:new Date().toISOString()});
-  clearTimeout(typingTimeout); typingTimeout=setTimeout(async()=>{await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});},2000);
-});
-
-// ---------------- LOAD MESSAGES ----------------
-async function loadMessages(){
-  messagesEl.innerHTML=''; let data=[];
-  if(currentGroupId){
-    const { data: groupMessages,error }=await supabaseClient.from('group_messages').select('*').eq('group_id',currentGroupId).order('created_at',{ascending:true});
-    if(error) return console.error(error);
-    data=groupMessages; data.forEach(m=>appendMessage({username:m.sender,message:m.message,created_at:m.created_at}, m.sender===currentUser.username?'self':'other'));
-    return;
-  }
-  if(currentChatUser){
-    const { data: privateMessages }=await supabaseClient.from('private_messages').select('*').or(`sender.eq.${currentUser.username},receiver.eq.${currentUser.username}`).or(`sender.eq.${currentChatUser},receiver.eq.${currentChatUser}`).order('created_at',{ascending:true});
-    data=privateMessages; data.forEach(m=>appendMessage({username:m.sender,message:m.message,created_at:m.created_at}, m.sender===currentUser.username?'self':'other'));
-    return;
-  }
-  const { data: globalMessages }=await supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true});
-  data=globalMessages; data.forEach(m=>appendMessage(m,m.username===currentUser.username?'self':'other'));
-}
-
-// ---------------- SUBSCRIPTIONS ----------------
-function subscribeAll(){
-  if(window.globalChannel) window.globalChannel.unsubscribe();
-  window.globalChannel=supabaseClient.channel('public:global_messages')
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
-      const m=payload.new; if(!currentUser||currentGroupId||currentChatUser===m.username) return; appendMessage(m,'other');
-    }).subscribe();
-  if(window.privateChannel) window.privateChannel.unsubscribe();
-  window.privateChannel=supabaseClient.channel('public:private_messages')
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{
-      const m=payload.new; if(!currentUser||currentGroupId||(m.sender!==currentChatUser&&m.receiver!==currentChatUser)) return;
-      appendMessage({username:m.sender,message:m.message,created_at:m.created_at},'other');
-    }).subscribe();
-  if(window.typingChannel) window.typingChannel.unsubscribe();
-  window.typingChannel=supabaseClient.channel('public:typing_status')
-    .on('postgres_changes',{event:'*',schema:'public',table:'typing_status'},payload=>{
-      const {username,typing}=payload.new; if(!currentUser||username===currentUser.username) return;
-      if(typing) typingUsers.add(username); else typingUsers.delete(username); updateTypingIndicator();
-    }).subscribe();
-}
-
-// ---------------- CREATE GROUP ----------------
-openGroupModalBtn.onclick=()=>{createGroupModal.style.display='flex';}
-closeModalBtn.onclick=()=>{createGroupModal.style.display='none'; selectedMembers=[]; renderSelectedMembers(); searchResults.innerHTML=''; groupNameInput.value=''; searchUserInput.value='';}
-searchUserInput.addEventListener('input',()=>{
-  const val=searchUserInput.value.toLowerCase(); searchResults.innerHTML='';
-  availableUsers.filter(u=>u.username.toLowerCase().includes(val)&&!selectedMembers.includes(u.username)).forEach(u=>{
-    const div=document.createElement('div'); div.className='user-search-result'; div.innerHTML=`<span>${u.username}</span><button>Add</button>`;
-    div.querySelector('button').onclick=()=>{selectedMembers.push(u.username); renderSelectedMembers(); div.remove();}
-    searchResults.appendChild(div);
-  });
-});
-function renderSelectedMembers(){selectedMembersDiv.innerHTML=''; selectedMembers.forEach(u=>{const span=document.createElement('div'); span.className='member-tag'; span.textContent=u; const btn=document.createElement('button'); btn.textContent='x'; btn.onclick=()=>{selectedMembers=selectedMembers.filter(x=>x!==u); renderSelectedMembers();}; span.appendChild(btn); selectedMembersDiv.appendChild(span);});}
-createGroupSubmit.onclick=async()=>{
-  const name=groupNameInput.value.trim(); if(!name||selectedMembers.length===0) return alert('Enter name and add members');
-  const { data:group } = await supabaseClient.from('groups').insert({name}).select().single();
-  await supabaseClient.from('group_members').insert(selectedMembers.map(u=>({username:u,group_id:group.id})));
-  selectedMembers=[]; groupNameInput.value=''; createGroupModal.style.display='none'; await loadUsers();
-}
-});
-</script>
+  </script>
 </body>
 </html>
