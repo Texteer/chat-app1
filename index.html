@@ -10,12 +10,12 @@ header { background:#0f1524; padding:1rem; display:flex; justify-content:space-b
 #currentChat { font-size:0.9rem; color:#7a7a7a; }
 #returnGlobalBtn { display:none; background:#0b78e3; color:#fff; border:none; border-radius:5px; padding:0.3rem 0.6rem; cursor:pointer; }
 #chatContainer { display:flex; flex:1; overflow:hidden; }
-#userList, #groupList { width:220px; border-right:1px solid #1c2335; overflow-y:auto; padding:0.5rem; }
-#userList h3, #groupList h3 { margin-top:0; margin-bottom:0.5rem; }
-#userList ul, #groupList ul { list-style:none; padding:0; margin:0; }
-#userList li, #groupList li { padding:0.5rem; cursor:pointer; border-radius:5px; display:flex; align-items:center; gap:0.5rem; }
-#userList li:hover, #groupList li:hover { background:#1c2335; }
-#userList li.active, #groupList li.active { background:#0b78e3; }
+#userList { width:220px; border-right:1px solid #1c2335; overflow-y:auto; padding:0.5rem; }
+#userList h3 { display:flex; justify-content:space-between; align-items:center; margin-top:0; margin-bottom:0.5rem; }
+#userList ul { list-style:none; padding:0; margin:0; }
+#userList li { padding:0.5rem; cursor:pointer; border-radius:5px; display:flex; align-items:center; gap:0.5rem; }
+#userList li:hover { background:#1c2335; }
+#userList li.active { background:#0b78e3; }
 .chatMain { display:flex; flex-direction:column; flex:1; }
 #typingIndicator { font-size:0.85rem; color:#7a7a7a; padding-left:1rem; margin-bottom:0.2rem; height:18px; }
 #messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; background:#101426; }
@@ -27,17 +27,18 @@ header { background:#0f1524; padding:1rem; display:flex; justify-content:space-b
 #input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#101426; color:#fff; }
 #input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
 #authModal, #createGroupModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:10; }
-#authBox, #createGroupBox { background:#101426; padding:2rem; border-radius:15px; width:400px; max-height:80%; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5); overflow-y:auto; }
+#authBox, #createGroupBox { background:#101426; padding:2rem; border-radius:15px; width:400px; max-height:80%; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5); overflow-y:auto; position:relative; }
 #authBox input, #createGroupBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
 #authBox button, #createGroupBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; }
 .profile-circle { display:inline-flex; justify-content:center; align-items:center; width:30px; height:30px; border-radius:50%; color:#fff; font-weight:bold; font-size:0.8rem; flex-shrink:0; }
-#createGroupBtn { width:100%; margin-bottom:0.5rem; background:#0b78e3; color:#fff; border:none; border-radius:5px; padding:0.4rem; cursor:pointer; }
+#openGroupModalBtn { background:#0b78e3; color:#fff; border:none; border-radius:5px; padding:0.2rem 0.5rem; cursor:pointer; font-size:0.8rem; }
 #selectedMembers { display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem; }
 .member-tag { background:#0b78e3; padding:0.2rem 0.5rem; border-radius:5px; display:flex; align-items:center; gap:0.3rem; }
 .member-tag button { background:transparent; border:none; color:#fff; cursor:pointer; font-weight:bold; }
 #searchUserInput { padding:0.4rem; margin-bottom:0.5rem; border-radius:5px; border:none; background:#141a2c; color:#fff; }
 .user-search-result { display:flex; justify-content:space-between; padding:0.3rem; border-radius:5px; cursor:pointer; }
 .user-search-result:hover { background:#1c2335; }
+.closeModal { position:absolute; top:0.5rem; right:0.5rem; background:#0b78e3; border:none; color:#fff; font-size:1rem; border-radius:50%; width:25px; height:25px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 </style>
 </head>
 <body>
@@ -50,13 +51,11 @@ header { background:#0f1524; padding:1rem; display:flex; justify-content:space-b
 
 <div id="chatContainer">
   <div id="userList">
-    <h3>Users</h3>
+    <h3>
+      Users
+      <button id="openGroupModalBtn">+ Group</button>
+    </h3>
     <ul id="users"></ul>
-  </div>
-  <div id="groupList">
-    <button id="createGroupBtn">+ New Group</button>
-    <h3>Groups</h3>
-    <ul id="groups"></ul>
   </div>
   <div class="chatMain">
     <div id="typingIndicator"></div>
@@ -80,6 +79,7 @@ header { background:#0f1524; padding:1rem; display:flex; justify-content:space-b
 <!-- Create Group Modal -->
 <div id="createGroupModal" style="display:none;">
   <div id="createGroupBox">
+    <button class="closeModal">&times;</button>
     <h2>Create Group</h2>
     <input type="text" id="groupNameInput" placeholder="Group Name">
     <input type="text" id="searchUserInput" placeholder="Search users to add">
@@ -91,187 +91,117 @@ header { background:#0f1524; padding:1rem; display:flex; justify-content:space-b
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
-  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+document.addEventListener('DOMContentLoaded', ()=>{
+const supabaseUrl='https://azpgwbxillscpwrraprl.supabase.co';
+const supabaseKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
 
-  let currentUser=null, currentChatUser=null, currentGroupId=null;
-  let typingUsers=new Set(), typingTimeout;
-  let availableUsers=[], selectedMembers=[];
+let currentUser=null,currentChatUser=null,currentGroupId=null;
+let typingUsers=new Set(),typingTimeout;
+let availableUsers=[],selectedMembers=[];
 
-  const messagesEl=document.getElementById('messages');
-  const messageInput=document.getElementById('messageInput');
-  const sendBtn=document.getElementById('sendBtn');
-  const codeInput=document.getElementById('codeInput');
-  const loginBtn=document.getElementById('loginBtn');
-  const authModal=document.getElementById('authModal');
-  const typingIndicator=document.getElementById('typingIndicator');
-  const usersEl=document.getElementById('users');
-  const groupsEl=document.getElementById('groups');
-  const currentChatEl=document.getElementById('currentChat');
-  const returnGlobalBtn=document.getElementById('returnGlobalBtn');
-  const createGroupBtn=document.getElementById('createGroupBtn');
-  const createGroupModal=document.getElementById('createGroupModal');
-  const groupNameInput=document.getElementById('groupNameInput');
-  const searchUserInput=document.getElementById('searchUserInput');
-  const searchResults=document.getElementById('searchResults');
-  const selectedMembersDiv=document.getElementById('selectedMembers');
-  const createGroupSubmit=document.getElementById('createGroupSubmit');
+// Elements
+const messagesEl=document.getElementById('messages');
+const messageInput=document.getElementById('messageInput');
+const sendBtn=document.getElementById('sendBtn');
+const codeInput=document.getElementById('codeInput');
+const loginBtn=document.getElementById('loginBtn');
+const authModal=document.getElementById('authModal');
+const typingIndicator=document.getElementById('typingIndicator');
+const usersEl=document.getElementById('users');
+const currentChatEl=document.getElementById('currentChat');
+const returnGlobalBtn=document.getElementById('returnGlobalBtn');
+const openGroupModalBtn=document.getElementById('openGroupModalBtn');
+const createGroupModal=document.getElementById('createGroupModal');
+const groupNameInput=document.getElementById('groupNameInput');
+const searchUserInput=document.getElementById('searchUserInput');
+const searchResults=document.getElementById('searchResults');
+const selectedMembersDiv=document.getElementById('selectedMembers');
+const createGroupSubmit=document.getElementById('createGroupSubmit');
+const closeModalBtn=document.querySelector('.closeModal');
 
-  // Helpers
-  function getInitials(name){return name.split(' ').map(n=>n[0].toUpperCase()).join('').slice(0,2);}
-  function stringToColor(str){let hash=0; for(let i=0;i<str.length;i++){hash=str.charCodeAt(i)+((hash<<5)-hash);} return `hsl(${hash%360},70%,50%)`;}
-  function createProfileCircle(name){const span=document.createElement('span'); span.className='profile-circle'; span.style.background=stringToColor(name); span.textContent=getInitials(name); return span;}
-  function appendMessage(message,type){const div=document.createElement('div'); div.className='message '+type; div.appendChild(createProfileCircle(message.username)); const content=document.createElement('span'); content.innerHTML=`<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`; div.appendChild(content); messagesEl.appendChild(div); messagesEl.scrollTop=messagesEl.scrollHeight;}
-  function updateTypingIndicator(){if(typingUsers.size===0){typingIndicator.textContent=''; return;} const names=Array.from(typingUsers); typingIndicator.textContent=names.length===1?`${names[0]} is typing...`:`${names.join(' and ')} are typing...`; }
+// Helpers
+function getInitials(name){return name.split(' ').map(n=>n[0].toUpperCase()).join('').slice(0,2);}
+function stringToColor(str){let hash=0;for(let i=0;i<str.length;i++){hash=str.charCodeAt(i)+((hash<<5)-hash);}return `hsl(${hash%360},70%,50%)`;}
+function createProfileCircle(name){const span=document.createElement('span'); span.className='profile-circle'; span.style.background=stringToColor(name); span.textContent=getInitials(name); return span;}
+function appendMessage(message,type){const div=document.createElement('div'); div.className='message '+type; div.appendChild(createProfileCircle(message.username||message.sender)); const content=document.createElement('span'); content.innerHTML=`<strong>${message.username||message.sender}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`; div.appendChild(content); messagesEl.appendChild(div); messagesEl.scrollTop=messagesEl.scrollHeight;}
+function updateTypingIndicator(){if(typingUsers.size===0){typingIndicator.textContent=''; return;} const names=Array.from(typingUsers); typingIndicator.textContent=names.length===1?`${names[0]} is typing...`:`${names.join(' and ')} are typing...`;}
 
-  // Login
-  async function loginWithCode(code){
-    try{
-      const { data, error } = await supabaseClient.from('chat_codes').select('username').eq('code',code).single();
-      if(error||!data){alert('Invalid code'); return false;}
-      currentUser={username:data.username,code}; localStorage.setItem('chatCode',code); authModal.style.display='none';
-      await loadUsers(); await loadGroups(); await loadMessages(); subscribeAll(); return true;
-    }catch(err){alert('Login failed'); console.error(err); return false;}
-  }
-  loginBtn.onclick=()=>{ const code=codeInput.value.trim(); if(!code)return alert('Enter your code'); loginWithCode(code);};
-  const savedCode=localStorage.getItem('chatCode'); if(savedCode) loginWithCode(savedCode);
+// Login
+async function loginWithCode(code){
+  try{
+    const { data,error } = await supabaseClient.from('chat_codes').select('username').eq('code',code).single();
+    if(error||!data){alert('Invalid code'); return false;}
+    currentUser={username:data.username,code}; localStorage.setItem('chatCode',code); authModal.style.display='none';
+    await loadUsers(); await loadMessages(); subscribeAll(); return true;
+  }catch(err){alert('Login failed'); console.error(err); return false;}
+}
+loginBtn.onclick=()=>{ const code=codeInput.value.trim(); if(!code) return alert('Enter your code'); loginWithCode(code);}
+const savedCode=localStorage.getItem('chatCode'); if(savedCode) loginWithCode(savedCode);
 
-  // Load Users
-  async function loadUsers(){
-    if(!currentUser) return;
-    const { data } = await supabaseClient.from('chat_codes').select('username');
-    availableUsers=data.filter(u=>u.username!==currentUser.username);
-    usersEl.innerHTML='';
-    availableUsers.forEach(u=>{
-      const li=document.createElement('li');
-      li.appendChild(createProfileCircle(u.username));
-      const span=document.createElement('span'); span.textContent=u.username; li.appendChild(span);
-      li.onclick=()=>{selectPrivateChat(u.username,li);}
-      if(currentChatUser===u.username) li.classList.add('active');
-      usersEl.appendChild(li);
-    });
-  }
+// Load Users & Groups merged
+async function loadUsers(){
+  if(!currentUser) return;
+  const { data:users } = await supabaseClient.from('chat_codes').select('username');
+  availableUsers=users.filter(u=>u.username!==currentUser.username);
+  const { data:groups } = await supabaseClient.from('group_members').select('*, groups(name)').eq('username',currentUser.username);
+  const merged=[...availableUsers.map(u=>({type:'user',username:u.username})), ...groups.map(g=>({type:'group',id:g.groups.id,name:g.groups.name}))];
+  usersEl.innerHTML='';
+  merged.forEach(item=>{
+    const li=document.createElement('li');
+    li.appendChild(createProfileCircle(item.username||item.name));
+    const span=document.createElement('span'); span.textContent=item.username||item.name; li.appendChild(span);
+    li.onclick=()=>{item.type==='user'?selectPrivateChat(item.username,li):selectGroupChat(item.id,item.name,li);}
+    if((currentChatUser===item.username)||(currentGroupId===item.id)) li.classList.add('active');
+    usersEl.appendChild(li);
+  });
+}
 
-  function selectPrivateChat(username,li){
-    currentChatUser=username; currentGroupId=null; currentChatEl.textContent=username; returnGlobalBtn.style.display='inline-block';
-    [...usersEl.children].forEach(li=>li.classList.remove('active'));
-    if(li) li.classList.add('active');
-    [...groupsEl.children].forEach(li=>li.classList.remove('active'));
-    loadMessages();
-  }
+// Select Chat
+function selectPrivateChat(username,li){currentChatUser=username; currentGroupId=null; currentChatEl.textContent=username; returnGlobalBtn.style.display='inline-block'; [...usersEl.children].forEach(li=>li.classList.remove('active')); if(li) li.classList.add('active'); loadMessages();}
+function selectGroupChat(groupId,name,li){currentGroupId=groupId; currentChatUser=null; currentChatEl.textContent=name; returnGlobalBtn.style.display='inline-block'; [...usersEl.children].forEach(li=>li.classList.remove('active')); if(li) li.classList.add('active'); loadMessages();}
+returnGlobalBtn.onclick=()=>{currentChatUser=null; currentGroupId=null; currentChatEl.textContent='Global Chat'; returnGlobalBtn.style.display='none'; [...usersEl.children].forEach(li=>li.classList.remove('active')); loadMessages();}
 
-  returnGlobalBtn.onclick=()=>{currentChatUser=null; currentGroupId=null; currentChatEl.textContent='Global Chat'; returnGlobalBtn.style.display='none'; [...usersEl.children].forEach(li=>li.classList.remove('active')); [...groupsEl.children].forEach(li=>li.classList.remove('active')); loadMessages();}
+// Open/Close Group Modal
+openGroupModalBtn.onclick=()=>{createGroupModal.style.display='flex'; selectedMembers=[]; renderSelectedMembers(); searchResults.innerHTML=''; searchUserInput.value='';}
+closeModalBtn.onclick=()=>{createGroupModal.style.display='none';}
 
-  // Groups
-  async function loadGroups(){
-    if(!currentUser) return;
-    const { data } = await supabaseClient.from('group_members').select('*, groups(name)').eq('username',currentUser.username);
-    groupsEl.innerHTML='';
-    data.forEach(g=>{
-      const li=document.createElement('li');
-      li.appendChild(createProfileCircle(g.groups.name));
-      const span=document.createElement('span'); span.textContent=g.groups.name; li.appendChild(span);
-      li.onclick=()=>{selectGroupChat(g.groups.id,g.groups.name,li);}
-      if(currentGroupId===g.groups.id) li.classList.add('active');
-      groupsEl.appendChild(li);
-    });
-  }
+// Search users
+searchUserInput.addEventListener('input',()=>{renderSearchResults();})
+function renderSearchResults(){const q=searchUserInput.value.toLowerCase(); searchResults.innerHTML=''; if(!q) return; availableUsers.filter(u=>u.username.toLowerCase().includes(q)&&!selectedMembers.includes(u.username)).forEach(u=>{const div=document.createElement('div'); div.className='user-search-result'; const span=document.createElement('span'); span.textContent=u.username; div.appendChild(span); const btn=document.createElement('button'); btn.textContent='Add'; btn.onclick=()=>{selectedMembers.push(u.username); renderSelectedMembers(); renderSearchResults();}; div.appendChild(btn); searchResults.appendChild(div);});}
+function renderSelectedMembers(){selectedMembersDiv.innerHTML=''; selectedMembers.forEach(u=>{const div=document.createElement('div'); div.className='member-tag'; div.textContent=u; const btn=document.createElement('button'); btn.textContent='x'; btn.onclick=()=>{selectedMembers=selectedMembers.filter(m=>m!==u); renderSelectedMembers(); renderSearchResults();}; div.appendChild(btn); selectedMembersDiv.appendChild(div);});}
 
-  function selectGroupChat(groupId,groupName,li){
-    currentGroupId=groupId; currentChatUser=null; currentChatEl.textContent=groupName; returnGlobalBtn.style.display='inline-block';
-    [...groupsEl.children].forEach(li=>li.classList.remove('active'));
-    if(li) li.classList.add('active'); loadMessages();
-  }
+// Create Group
+createGroupSubmit.onclick=async()=>{
+  const name=groupNameInput.value.trim(); if(!name) return alert('Group name required');
+  const { data } = await supabaseClient.from('groups').insert([{name,creator:currentUser.username}]).select().single();
+  const groupId=data.id; const members=[...selectedMembers,currentUser.username].map(u=>({group_id:groupId,username:u}));
+  await supabaseClient.from('group_members').insert(members); createGroupModal.style.display='none'; groupNameInput.value=''; searchUserInput.value=''; selectedMembers=[]; renderSelectedMembers(); loadUsers();
+}
 
-  // Expandable Create Group
-  createGroupBtn.onclick=()=>{createGroupModal.style.display='flex'; selectedMembers=[]; renderSelectedMembers(); renderSearchResults();}
+// Send Message
+async function sendMessage(){const msg=messageInput.value.trim(); if(!msg||!currentUser) return;
+if(currentGroupId){const data={group_id:currentGroupId,sender:currentUser.username,message:msg,created_at:new Date().toISOString()}; appendMessage({username:currentUser.username,message:msg,created_at:data.created_at},'self'); await supabaseClient.from('group_messages').insert([data]);}
+else if(currentChatUser){const data={sender:currentUser.username,receiver:currentChatUser,message:msg,created_at:new Date().toISOString()}; appendMessage({username:currentUser.username,message:msg,created_at:data.created_at},'self'); await supabaseClient.from('private_messages').insert([data]);}
+else{const data={username:currentUser.username,message:msg,created_at:new Date().toISOString()}; appendMessage(data,'self'); await supabaseClient.from('global_messages').insert([data]);}
+messageInput.value=''; await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});}
+sendBtn.onclick=sendMessage; messageInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendMessage();});
+messageInput.addEventListener('input',async()=>{if(!currentUser) return; await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:true,updated_at:new Date().toISOString()}); clearTimeout(typingTimeout); typingTimeout=setTimeout(async()=>{await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});},2000);});
 
-  searchUserInput.addEventListener('input',()=>{renderSearchResults();})
+// Load Messages
+async function loadMessages(){let data=[]; if(currentGroupId){const res=await supabaseClient.from('group_messages').select('*').eq('group_id',currentGroupId).order('created_at',{ascending:true}); data=res.data;}
+else if(currentChatUser){const res=await supabaseClient.from('private_messages').select('*').or(`sender.eq.${currentUser.username},receiver.eq.${currentUser.username}`).or(`sender.eq.${currentChatUser},receiver.eq.${currentChatUser}`).order('created_at',{ascending:true}); data=res.data;}
+else{const res=await supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true}); data=res.data;}
+messagesEl.innerHTML=''; data.forEach(m=>{const type=(m.username===currentUser.username||m.sender===currentUser.username)?'self':'other'; appendMessage(m,type);});}
 
-  function renderSearchResults(){
-    const query=searchUserInput.value.toLowerCase();
-    searchResults.innerHTML='';
-    availableUsers.filter(u=>u.username.toLowerCase().includes(query)&&!selectedMembers.includes(u.username)).forEach(u=>{
-      const div=document.createElement('div'); div.className='user-search-result';
-      const span=document.createElement('span'); span.textContent=u.username; div.appendChild(span);
-      const btn=document.createElement('button'); btn.textContent='Add'; btn.onclick=()=>{selectedMembers.push(u.username); renderSelectedMembers(); renderSearchResults();}
-      div.appendChild(btn); searchResults.appendChild(div);
-    });
-  }
-
-  function renderSelectedMembers(){
-    selectedMembersDiv.innerHTML='';
-    selectedMembers.forEach(u=>{
-      const div=document.createElement('div'); div.className='member-tag'; div.textContent=u;
-      const btn=document.createElement('button'); btn.textContent='x'; btn.onclick=()=>{selectedMembers=selectedMembers.filter(m=>m!==u); renderSelectedMembers(); renderSearchResults();}
-      div.appendChild(btn); selectedMembersDiv.appendChild(div);
-    });
-  }
-
-  createGroupSubmit.onclick=async()=>{
-    const name=groupNameInput.value.trim(); if(!name) return alert('Group name required');
-    const { data } = await supabaseClient.from('groups').insert([{name,creator:currentUser.username}]).select().single();
-    const groupId=data.id;
-    const members=[...selectedMembers,currentUser.username].map(u=>({group_id:groupId,username:u}));
-    await supabaseClient.from('group_members').insert(members);
-    createGroupModal.style.display='none'; groupNameInput.value=''; searchUserInput.value=''; selectedMembers=[]; renderSelectedMembers(); loadGroups();
-  }
-
-  // Send Message
-  async function sendMessage(){
-    const msg=messageInput.value.trim(); if(!msg||!currentUser)return;
-    if(currentGroupId){
-      const data={group_id:currentGroupId,sender:currentUser.username,message:msg,created_at:new Date().toISOString()};
-      appendMessage({username:currentUser.username,message:msg,created_at:data.created_at},'self');
-      await supabaseClient.from('group_messages').insert([data]);
-    } else if(currentChatUser){
-      const data={sender:currentUser.username,receiver:currentChatUser,message:msg,created_at:new Date().toISOString()};
-      appendMessage({username:currentUser.username,message:msg,created_at:data.created_at},'self');
-      await supabaseClient.from('private_messages').insert([data]);
-    } else {
-      const data={username:currentUser.username,message:msg,created_at:new Date().toISOString()};
-      appendMessage(data,'self');
-      await supabaseClient.from('global_messages').insert([data]);
-    }
-    messageInput.value='';
-    await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});
-  }
-  sendBtn.onclick=sendMessage;
-  messageInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendMessage();});
-  messageInput.addEventListener('input',async()=>{if(!currentUser)return; await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:true,updated_at:new Date().toISOString()}); clearTimeout(typingTimeout); typingTimeout=setTimeout(async()=>{await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});},2000);});
-
-  // Load Messages
-  async function loadMessages(){
-    let data=[];
-    if(currentGroupId){
-      const res=await supabaseClient.from('group_messages').select('*').eq('group_id',currentGroupId).order('created_at',{ascending:true});
-      data=res.data;
-    } else if(currentChatUser){
-      const res=await supabaseClient.from('private_messages').select('*').or(`sender.eq.${currentUser.username},receiver.eq.${currentUser.username}`).or(`sender.eq.${currentChatUser},receiver.eq.${currentChatUser}`).order('created_at',{ascending:true});
-      data=res.data;
-    } else {
-      const res=await supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true});
-      data=res.data;
-    }
-    messagesEl.innerHTML='';
-    data.forEach(m=>{const type=(m.username===currentUser.username||m.sender===currentUser.username)?'self':'other'; appendMessage(m,type);});
-  }
-
-  // Subscribe Realtime
-  function subscribeAll(){
-    // Global
-    supabaseClient.channel('public:global_messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{const m=payload.new;if(!currentUser||m.username===currentUser.username)return; appendMessage(m,'other');}).subscribe();
-    // Private
-    supabaseClient.channel('public:private_messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{const m=payload.new; if(!currentUser||(m.sender!==currentChatUser && m.receiver!==currentChatUser)) return; appendMessage(m,'other');}).subscribe();
-    // Group
-    supabaseClient.channel('public:group_messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages'},payload=>{const m=payload.new; if(!currentUser||m.group_id!==currentGroupId) return; appendMessage({username:m.sender,message:m.message,created_at:m.created_at},'other');}).subscribe();
-    // Typing
-    supabaseClient.channel('public:typing_status').on('postgres_changes',{event:'*',schema:'public',table:'typing_status'},payload=>{const {username,typing}=payload.new; if(!currentUser||username===currentUser.username)return; if(typing) typingUsers.add(username); else typingUsers.delete(username); updateTypingIndicator();}).subscribe();
-  }
+// Subscribe
+function subscribeAll(){
+  supabaseClient.channel('public:global_messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{const m=payload.new;if(!currentUser||m.username===currentUser.username) return; appendMessage(m,'other');}).subscribe();
+  supabaseClient.channel('public:private_messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{const m=payload.new;if(!currentUser||(m.sender!==currentChatUser && m.receiver!==currentChatUser)) return; appendMessage(m,'other');}).subscribe();
+  supabaseClient.channel('public:group_messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages'},payload=>{const m=payload.new;if(!currentUser||m.group_id!==currentGroupId) return; appendMessage({username:m.sender,message:m.message,created_at:m.created_at},'other');}).subscribe();
+  supabaseClient.channel('public:typing_status').on('postgres_changes',{event:'*',schema:'public',table:'typing_status'},payload=>{const {username,typing}=payload.new;if(!currentUser||username===currentUser.username) return; if(typing) typingUsers.add(username); else typingUsers.delete(username); updateTypingIndicator();}).subscribe();
+}
 });
 </script>
-
 </body>
 </html>
