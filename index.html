@@ -3,36 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BHC Private & Global Chat</title>
+<title>BHC Chat</title>
 <style>
 body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#fff; height:100vh; display:flex; flex-direction:column; }
-header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; font-weight:bold; }
+header { background:#0f1524; padding:1rem; display:flex; justify-content:space-between; align-items:center; font-size:1.5rem; font-weight:bold; }
+#currentChat { font-size:0.9rem; color:#7a7a7a; }
+#returnGlobalBtn { display:none; background:#0b78e3; color:#fff; border:none; border-radius:5px; padding:0.3rem 0.6rem; cursor:pointer; }
+#chatContainer { display:flex; flex:1; overflow:hidden; }
+#userList { width:220px; border-right:1px solid #1c2335; overflow-y:auto; padding:0.5rem; }
+#userList h3 { margin-top:0; margin-bottom:0.5rem; }
+#userList ul { list-style:none; padding:0; margin:0; }
+#userList li { padding:0.5rem; cursor:pointer; border-radius:5px; display:flex; align-items:center; gap:0.5rem; }
+#userList li:hover { background:#1c2335; }
+#userList li.active { background:#0b78e3; }
+.chatMain { display:flex; flex-direction:column; flex:1; }
 #typingIndicator { font-size:0.85rem; color:#7a7a7a; padding-left:1rem; margin-bottom:0.2rem; height:18px; }
-#input { display:flex; padding:0.5rem; background:#101426; border-top:1px solid #1c2335; }
-#input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#141a2c; color:#fff; }
-#input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
-#messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
+#messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; background:#101426; }
 .message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; display:flex; align-items:center; }
 .message.self { background:#0b78e3; align-self:flex-end; color:#fff; flex-direction:row-reverse; }
 .message.other { background:#1c2335; align-self:flex-start; color:#fff; }
 .timestamp { font-size:0.65rem; color:#7a7a7a; margin-left:0.5rem; margin-right:0.5rem; }
+#input { display:flex; padding:0.5rem; background:#141a2c; border-top:1px solid #1c2335; }
+#input input { flex:1; padding:0.6rem 1rem; border-radius:20px 0 0 20px; border:none; background:#101426; color:#fff; }
+#input button { padding:0.6rem 1.2rem; border:none; border-radius:0 20px 20px 0; background:#0b78e3; color:#fff; cursor:pointer; font-weight:bold; }
 #authModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:10; }
 #authBox { background:#101426; padding:2rem; border-radius:15px; width:320px; display:flex; flex-direction:column; box-shadow:0 5px 20px rgba(0,0,0,0.5); }
 #authBox input { margin-bottom:1rem; padding:0.6rem; border-radius:8px; border:none; background:#141a2c; color:#fff; }
 #authBox button { padding:0.6rem; border:none; border-radius:8px; background:#0b78e3; color:#fff; font-weight:bold; cursor:pointer; }
-#userList { width:200px; border-right:1px solid #1c2335; overflow-y:auto; padding:0.5rem; }
-#userList ul { list-style:none; padding:0; margin:0; }
-#userList li { padding:0.3rem; cursor:pointer; border-radius:5px; }
-#userList li:hover { background:#1c2335; }
-.chatContainer { display:flex; flex:1; overflow:hidden; }
-.chatMain { display:flex; flex-direction:column; flex:1; }
+.profile-circle { display:inline-flex; justify-content:center; align-items:center; width:30px; height:30px; border-radius:50%; color:#fff; font-weight:bold; font-size:0.8rem; flex-shrink:0; }
 </style>
 </head>
 <body>
 
-<header>BHC Chat</header>
+<header>
+  <span>BHC Chat</span>
+  <span id="currentChat">Global Chat</span>
+  <button id="returnGlobalBtn">Global Chat</button>
+</header>
 
-<div class="chatContainer">
+<div id="chatContainer">
   <div id="userList">
     <h3>Users</h3>
     <ul id="users"></ul>
@@ -59,7 +68,7 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const supabaseUrl = 'https://azpgwbxillscpwrraprl.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+  const supabaseKey = 'YOUR_SUPABASE_KEY';
   const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
   let currentUser = null;
@@ -72,6 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const authModal = document.getElementById('authModal');
   const typingIndicator = document.getElementById('typingIndicator');
   const usersEl = document.getElementById('users');
+  const currentChatEl = document.getElementById('currentChat');
+  const returnGlobalBtn = document.getElementById('returnGlobalBtn');
 
   let typingUsers = new Set();
   let typingTimeout;
@@ -79,8 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------- HELPERS ----------
   function getInitials(name){ return name.split(' ').map(n=>n[0].toUpperCase()).join('').slice(0,2); }
   function stringToColor(str){ let hash=0; for(let i=0;i<str.length;i++){hash=str.charCodeAt(i)+((hash<<5)-hash);} return `hsl(${hash%360},70%,50%)`; }
-  function createProfileCircle(username){ const span=document.createElement('span'); span.style.cssText='display:inline-flex;justify-content:center;align-items:center;width:30px;height:30px;border-radius:50%;background:'+stringToColor(username)+';color:#fff;font-weight:bold;font-size:0.8rem;margin-right:0.5rem'; span.textContent=getInitials(username); return span; }
-  function appendMessage(message,type){ const div=document.createElement('div'); div.className='message '+type; div.appendChild(createProfileCircle(message.username)); const content=document.createElement('span'); content.innerHTML=`<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`; div.appendChild(content); messagesEl.appendChild(div); messagesEl.scrollTop=messagesEl.scrollHeight; }
+  function createProfileCircle(username){ const span=document.createElement('span'); span.className='profile-circle'; span.style.background = stringToColor(username); span.textContent=getInitials(username); return span; }
+  function appendMessage(message,type){ const div=document.createElement('div'); div.className='message '+type; div.appendChild(createProfileCircle(message.username)); const content=document.createElement('span'); content.innerHTML=`<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`; div.appendChild(content); messagesEl.appendChild(div); messagesEl.scrollTop = messagesEl.scrollHeight; }
   function updateTypingIndicator(){ if(typingUsers.size===0){ typingIndicator.textContent=''; return; } const names=Array.from(typingUsers); typingIndicator.textContent=names.length===1?`${names[0]} is typing...`:`${names.join(' and ')} are typing...`; }
 
   // ---------- LOGIN ----------
@@ -89,46 +100,64 @@ document.addEventListener('DOMContentLoaded', () => {
       const { data, error } = await supabaseClient.from('chat_codes').select('username').eq('code', code).single();
       if(error||!data){ alert('Invalid code'); return false; }
       currentUser={username:data.username,code}; localStorage.setItem('chatCode',code); authModal.style.display='none';
-      await updateOnlineStatus(); await loadMessages(); subscribeMessages(); subscribeTyping(); return true;
+      await loadUsers(); await loadMessages(); subscribeMessages(); subscribeTyping(); return true;
     }catch(err){ alert('Login failed'); console.error(err); return false; }
   }
   loginBtn.onclick=()=>{ const code=codeInput.value.trim(); if(!code)return alert('Enter your code'); loginWithCode(code); };
   const savedCode=localStorage.getItem('chatCode'); if(savedCode) loginWithCode(savedCode);
 
   // ---------- USER LIST ----------
-  setInterval(async () => {
+  async function loadUsers(){
     if(!currentUser) return;
     const { data, error } = await supabaseClient.from('chat_codes').select('username');
     if(error) return console.error(error);
     usersEl.innerHTML='';
     data.forEach(u=>{
       if(u.username===currentUser.username) return;
-      const li=document.createElement('li'); li.textContent=u.username;
-      li.onclick=()=>selectPrivateChat(u.username);
+      const li = document.createElement('li');
+      li.appendChild(createProfileCircle(u.username));
+      const text = document.createElement('span'); text.textContent=u.username; li.appendChild(text);
+      li.onclick = () => selectPrivateChat(u.username, li);
+      if(privateChatUser === u.username) li.classList.add('active');
       usersEl.appendChild(li);
     });
-  }, 5000);
+  }
+  setInterval(loadUsers,5000);
 
-  function selectPrivateChat(username){ privateChatUser=username; messagesEl.innerHTML=''; loadMessages(); }
+  function selectPrivateChat(username, liElement){
+    privateChatUser=username;
+    currentChatEl.textContent=username;
+    returnGlobalBtn.style.display='inline-block';
+    [...usersEl.children].forEach(li=>li.classList.remove('active'));
+    if(liElement) liElement.classList.add('active');
+    loadMessages();
+  }
+
+  returnGlobalBtn.onclick=()=>{
+    privateChatUser=null;
+    currentChatEl.textContent='Global Chat';
+    returnGlobalBtn.style.display='none';
+    [...usersEl.children].forEach(li=>li.classList.remove('active'));
+    loadMessages();
+  };
 
   // ---------- SEND MESSAGE ----------
   async function sendMessage(){
     const msg=messageInput.value.trim(); if(!msg||!currentUser)return;
-    const messageData={username:currentUser.username,message:msg,created_at:new Date().toISOString()};
     if(privateChatUser){
       const privateData={sender:currentUser.username,receiver:privateChatUser,message:msg,created_at:new Date().toISOString()};
       appendMessage({username:currentUser.username,message:msg,created_at:privateData.created_at},'self');
       await supabaseClient.from('private_messages').insert([privateData]);
     }else{
+      const messageData={username:currentUser.username,message:msg,created_at:new Date().toISOString()};
       appendMessage(messageData,'self');
       await supabaseClient.from('global_messages').insert([messageData]);
     }
-    messageInput.value=''; updateOnlineStatus();
+    messageInput.value='';
     await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});
   }
   sendBtn.onclick=sendMessage;
   messageInput.addEventListener('keypress',(e)=>{ if(e.key==='Enter') sendMessage(); });
-
   messageInput.addEventListener('input', async()=>{
     if(!currentUser) return;
     await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:true,updated_at:new Date().toISOString()});
@@ -140,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadMessages(){
     let data=[];
     if(privateChatUser){
-      const res=await supabaseClient.from('private_messages').select('*')
+      const res = await supabaseClient.from('private_messages').select('*')
         .or(`sender.eq.${currentUser.username},receiver.eq.${currentUser.username}`)
         .or(`sender.eq.${privateChatUser},receiver.eq.${privateChatUser}`)
         .order('created_at',{ascending:true});
@@ -150,22 +179,27 @@ document.addEventListener('DOMContentLoaded', () => {
       data=res.data;
     }
     messagesEl.innerHTML='';
-    data.forEach(m=>{ const type=(m.username===currentUser.username||m.sender===currentUser.username)?'self':'other'; appendMessage({username:m.username||m.sender,message:m.message,created_at:m.created_at},type); });
+    data.forEach(m=>{
+      const type = (m.username===currentUser.username || m.sender===currentUser.username)?'self':'other';
+      appendMessage({username:m.username||m.sender,message:m.message,created_at:m.created_at},type);
+    });
   }
 
   // ---------- REALTIME MESSAGES ----------
   function subscribeMessages(){
     if(window.messageChannel) window.messageChannel.unsubscribe();
-    window.messageChannel=supabaseClient.channel('public:global_messages')
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{ const m=payload.new; if(!currentUser||m.username===currentUser.username) return; appendMessage(m,'other'); })
-      .subscribe();
+    window.messageChannel = supabaseClient.channel('public:global_messages')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
+        const m=payload.new; if(!currentUser || m.username===currentUser.username) return; appendMessage(m,'other');
+      }).subscribe();
 
     if(window.privateChannel) window.privateChannel.unsubscribe();
-    window.privateChannel=supabaseClient.channel('public:private_messages')
+    window.privateChannel = supabaseClient.channel('public:private_messages')
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{
         const m=payload.new;
-        if(!currentUser||(m.sender!==currentUser.username && m.receiver!==currentUser.username)) return;
-        appendMessage({username:m.sender,message:m.message,created_at:m.created_at},m.sender===currentUser.username?'self':'other');
+        if(!currentUser || (m.sender!==currentUser.username && m.receiver!==currentUser.username)) return;
+        const type = m.sender===currentUser.username?'self':'other';
+        appendMessage({username:m.sender,message:m.message,created_at:m.created_at},type);
       }).subscribe();
   }
 
@@ -175,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.typingChannel=supabaseClient.channel('public:typing_status')
       .on('postgres_changes',{event:'*',schema:'public',table:'typing_status'},payload=>{
         const {username,typing}=payload.new;
-        if(!currentUser||username===currentUser.username) return;
+        if(!currentUser || username===currentUser.username) return;
         if(typing) typingUsers.add(username); else typingUsers.delete(username);
         updateTypingIndicator();
       }).subscribe();
