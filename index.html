@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BHC Chat with Groups</title>
+<title>BHC Chat with Groups Fixed</title>
 <style>
 body { margin:0; font-family:'Segoe UI',sans-serif; background:#0a0f1a; color:#fff; height:100vh; display:flex; flex-direction:column; }
 header { background:#0f1524; padding:1rem; display:flex; justify-content:space-between; align-items:center; font-size:1.5rem; font-weight:bold; }
@@ -121,72 +121,68 @@ const closeModalBtn=document.querySelector('.closeModal');
 function getInitials(name){return name.split(' ').map(n=>n[0].toUpperCase()).join('').slice(0,2);}
 function stringToColor(str){let hash=0;for(let i=0;i<str.length;i++){hash=str.charCodeAt(i)+((hash<<5)-hash);}return `hsl(${hash%360},70%,50%)`;}
 function createProfileCircle(name){const span=document.createElement('span'); span.className='profile-circle'; span.style.background=stringToColor(name); span.textContent=getInitials(name); return span;}
-function appendMessage(message,type){const div=document.createElement('div'); div.className='message '+type; div.appendChild(createProfileCircle(message.username||message.sender)); const content=document.createElement('span'); content.innerHTML=`<strong>${message.username||message.sender}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`; div.appendChild(content); messagesEl.appendChild(div); messagesEl.scrollTop=messagesEl.scrollHeight;}
-function updateTypingIndicator(){if(typingUsers.size===0){typingIndicator.textContent=''; return;} const names=Array.from(typingUsers); typingIndicator.textContent=names.length===1?`${names[0]} is typing...`:`${names.join(' and ')} are typing...`;}
+function appendMessage(message,type){const div=document.createElement('div'); div.className='message '+type; div.appendChild(createProfileCircle(message.username)); const content=document.createElement('span'); content.innerHTML=`<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`; div.appendChild(content); messagesEl.appendChild(div); messagesEl.scrollTop=messagesEl.scrollHeight;}
+function updateTypingIndicator(){typingIndicator.textContent=typingUsers.size===0?'':Array.from(typingUsers).join(' and ')+' is typing...';}
 
-// Login
+// ---------------- LOGIN ----------------
 async function loginWithCode(code){
   try{
-    const { data,error } = await supabaseClient.from('chat_codes').select('username').eq('code',code).single();
-    if(error||!data){alert('Invalid code'); return false;}
-    currentUser={username:data.username,code}; localStorage.setItem('chatCode',code); authModal.style.display='none';
-    await loadUsers(); await loadMessages(); subscribeAll(); return true;
-  }catch(err){alert('Login failed'); console.error(err); return false;}
+    const { data,error }=await supabaseClient.from('chat_codes').select('username').eq('code',code).single();
+    if(error||!data){alert('Invalid code');return false;}
+    currentUser={username:data.username,code};
+    localStorage.setItem('chatCode',code);
+    authModal.style.display='none';
+    await loadUsers();
+    await loadMessages();
+    subscribeAll();
+    return true;
+  }catch(e){console.error(e);alert('Login failed');return false;}
 }
-loginBtn.onclick=()=>{ const code=codeInput.value.trim(); if(!code) return alert('Enter your code'); loginWithCode(code);}
+loginBtn.onclick=()=>{const code=codeInput.value.trim(); if(!code) return alert('Enter code'); loginWithCode(code);}
 const savedCode=localStorage.getItem('chatCode'); if(savedCode) loginWithCode(savedCode);
 
-// Load users and groups
+// ---------------- USERS ----------------
 async function loadUsers(){
-  if(!currentUser) return;
-  const { data:users } = await supabaseClient.from('chat_codes').select('username');
-  availableUsers=users.filter(u=>u.username!==currentUser.username);
-  const { data:groups } = await supabaseClient.from('group_members').select('*, groups(name)').eq('username',currentUser.username);
-  const merged=[...availableUsers.map(u=>({type:'user',username:u.username})), ...groups.map(g=>({type:'group',id:g.groups.id,name:g.groups.name}))];
+  const { data }=await supabaseClient.from('chat_codes').select('*').order('username',{ascending:true});
+  availableUsers=data.filter(u=>u.username!==currentUser.username);
+  renderUserList();
+}
+function renderUserList(){
   usersEl.innerHTML='';
-  merged.forEach(item=>{
-    const li=document.createElement('li'); li.appendChild(createProfileCircle(item.username||item.name));
-    const span=document.createElement('span'); span.textContent=item.username||item.name; li.appendChild(span);
-    li.onclick=()=>{item.type==='user'?selectPrivateChat(item.username,li):selectGroupChat(item.id,item.name,li);}
-    if((currentChatUser===item.username)||(currentGroupId===item.id)) li.classList.add('active');
+  availableUsers.forEach(u=>{
+    const li=document.createElement('li');
+    li.appendChild(createProfileCircle(u.username));
+    const span=document.createElement('span'); span.textContent=u.username; li.appendChild(span);
+    li.onclick=()=>{currentChatUser=u.username; currentGroupId=null; currentChatEl.textContent=u.username; [...usersEl.children].forEach(item=>item.classList.remove('active')); li.classList.add('active'); loadMessages();}
     usersEl.appendChild(li);
+  });
+  // Load groups
+  supabaseClient.from('groups').select('*').then(res=>{
+    res.data.forEach(g=>{
+      const li=document.createElement('li');
+      li.appendChild(createProfileCircle(g.name));
+      const span=document.createElement('span'); span.textContent=g.name; li.appendChild(span);
+      li.onclick=()=>selectGroupChat(g.id,g.name,li);
+      usersEl.appendChild(li);
+    });
   });
 }
 
-// Select chat functions
-function selectPrivateChat(username,li){currentChatUser=username; currentGroupId=null; currentChatEl.textContent=username; returnGlobalBtn.style.display='inline-block'; [...usersEl.children].forEach(li=>li.classList.remove('active')); if(li) li.classList.add('active'); loadMessages();}
-function selectGroupChat(groupId,name,li){
-  currentGroupId=groupId; currentChatUser=null; currentChatEl.textContent=name; returnGlobalBtn.style.display='inline-block';
+// ---------------- GROUP CHAT ----------------
+function selectGroupChat(groupId,groupName,li){
+  currentGroupId=groupId; currentChatUser=null; currentChatEl.textContent=groupName;
   [...usersEl.children].forEach(item=>item.classList.remove('active')); if(li) li.classList.add('active');
-  messagesEl.innerHTML=''; loadMessages();
+  messagesEl.innerHTML='';
   if(groupChannel) groupChannel.unsubscribe();
-  groupChannel = supabaseClient.channel('public:group_messages:' + groupId)
+  groupChannel=supabaseClient.channel('public:group_messages:'+groupId)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages'},payload=>{
-      const m=payload.new; if(m.group_id!==currentGroupId) return;
+      const m=payload.new; if(m.group_id!==currentGroupId) return; if(m.sender===currentUser.username) return;
       appendMessage({username:m.sender,message:m.message,created_at:m.created_at},'other');
     }).subscribe();
-}
-returnGlobalBtn.onclick=()=>{currentChatUser=null; currentGroupId=null; currentChatEl.textContent='Global Chat'; returnGlobalBtn.style.display='none'; [...usersEl.children].forEach(li=>li.classList.remove('active')); loadMessages();}
-
-// Group modal and search
-openGroupModalBtn.onclick=()=>{createGroupModal.style.display='flex'; selectedMembers=[]; renderSelectedMembers(); searchResults.innerHTML=''; searchUserInput.value='';}
-closeModalBtn.onclick=()=>{createGroupModal.style.display='none';}
-searchUserInput.addEventListener('input',()=>{const val=searchUserInput.value.toLowerCase(); searchResults.innerHTML=''; availableUsers.filter(u=>u.username.toLowerCase().includes(val)&&!selectedMembers.includes(u.username)).forEach(u=>{
-  const div=document.createElement('div'); div.className='user-search-result';
-  div.innerHTML=`<span>${u.username}</span><button>Add</button>`; div.querySelector('button').onclick=()=>{selectedMembers.push(u.username); renderSelectedMembers(); div.remove();}
-  searchResults.appendChild(div);
-});});
-function renderSelectedMembers(){selectedMembersDiv.innerHTML=''; selectedMembers.forEach(u=>{const span=document.createElement('div'); span.className='member-tag'; span.textContent=u; const btn=document.createElement('button'); btn.textContent='x'; btn.onclick=()=>{selectedMembers=selectedMembers.filter(x=>x!==u); renderSelectedMembers();}; span.appendChild(btn); selectedMembersDiv.appendChild(span);});}
-
-// Create group
-createGroupSubmit.onclick=async()=>{
-  const name=groupNameInput.value.trim(); if(!name||selectedMembers.length===0) return alert('Enter name and add members');
-  const { data:group } = await supabaseClient.from('groups').insert({name}).select().single();
-  await supabaseClient.from('group_members').insert(selectedMembers.map(u=>({username:u,group_id:group.id})));
-  selectedMembers=[]; groupNameInput.value=''; createGroupModal.style.display='none'; await loadUsers();
+  loadMessages();
 }
 
-// Send messages
+// ---------------- SEND ----------------
 async function sendMessage(){
   const msg=messageInput.value.trim(); if(!msg||!currentUser) return;
   messageInput.value='';
@@ -202,48 +198,71 @@ async function sendMessage(){
     const m={username:currentUser.username,message:msg,created_at:new Date().toISOString()};
     appendMessage(m,'self'); await supabaseClient.from('global_messages').insert([m]);
   }
-  // Remove typing
   await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});
 }
-sendBtn.onclick=sendMessage;
-messageInput.addEventListener('keypress',e=>{if(e.key==='Enter') sendMessage();});
+sendBtn.onclick=sendMessage; messageInput.addEventListener('keypress',e=>{if(e.key==='Enter') sendMessage();});
 messageInput.addEventListener('input',async()=>{
   if(!currentUser) return;
   await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:true,updated_at:new Date().toISOString()});
-  clearTimeout(typingTimeout);
-  typingTimeout=setTimeout(async()=>{await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});},2000);
+  clearTimeout(typingTimeout); typingTimeout=setTimeout(async()=>{await supabaseClient.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()});},2000);
 });
 
-// Load messages
+// ---------------- LOAD MESSAGES ----------------
 async function loadMessages(){
-  messagesEl.innerHTML='';
-  let data=[];
+  messagesEl.innerHTML=''; let data=[];
   if(currentGroupId){
-    const { data:groupMessages,error } = await supabaseClient.from('group_messages').select('*').eq('group_id',currentGroupId).order('created_at',{ascending:true});
+    const { data: groupMessages,error }=await supabaseClient.from('group_messages').select('*').eq('group_id',currentGroupId).order('created_at',{ascending:true});
     if(error) return console.error(error);
-    data=groupMessages;
-    data.forEach(m=>appendMessage({username:m.sender,message:m.message,created_at:m.created_at},m.sender===currentUser.username?'self':'other'));
-  } else if(currentChatUser){
-    const { data:privateMessages } = await supabaseClient.from('private_messages').select('*').or(`sender.eq.${currentUser.username},receiver.eq.${currentUser.username}`).or(`sender.eq.${currentChatUser},receiver.eq.${currentChatUser}`).order('created_at',{ascending:true});
-    data=privateMessages;
-    data.forEach(m=>appendMessage({username:m.sender,message:m.message,created_at:m.created_at},m.sender===currentUser.username?'self':'other'));
-  } else {
-    const { data:globalMessages } = await supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true});
-    data=globalMessages;
-    data.forEach(m=>appendMessage(m,m.username===currentUser.username?'self':'other'));
+    data=groupMessages; data.forEach(m=>appendMessage({username:m.sender,message:m.message,created_at:m.created_at}, m.sender===currentUser.username?'self':'other'));
+    return;
   }
+  if(currentChatUser){
+    const { data: privateMessages }=await supabaseClient.from('private_messages').select('*').or(`sender.eq.${currentUser.username},receiver.eq.${currentUser.username}`).or(`sender.eq.${currentChatUser},receiver.eq.${currentChatUser}`).order('created_at',{ascending:true});
+    data=privateMessages; data.forEach(m=>appendMessage({username:m.sender,message:m.message,created_at:m.created_at}, m.sender===currentUser.username?'self':'other'));
+    return;
+  }
+  const { data: globalMessages }=await supabaseClient.from('global_messages').select('*').order('created_at',{ascending:true});
+  data=globalMessages; data.forEach(m=>appendMessage(m,m.username===currentUser.username?'self':'other'));
 }
 
-// Realtime subscriptions
+// ---------------- SUBSCRIPTIONS ----------------
 function subscribeAll(){
   if(window.globalChannel) window.globalChannel.unsubscribe();
-  window.globalChannel = supabaseClient.channel('public:global_messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{const m=payload.new;if(!currentUser||currentGroupId||currentChatUser===m.username) return; appendMessage(m,'other');}).subscribe();
-
+  window.globalChannel=supabaseClient.channel('public:global_messages')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
+      const m=payload.new; if(!currentUser||currentGroupId||currentChatUser===m.username) return; appendMessage(m,'other');
+    }).subscribe();
   if(window.privateChannel) window.privateChannel.unsubscribe();
-  window.privateChannel = supabaseClient.channel('public:private_messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{const m=payload.new;if(!currentUser||currentGroupId||(m.sender!==currentChatUser && m.receiver!==currentChatUser)) return; appendMessage({username:m.sender,message:m.message,created_at:m.created_at},'other');}).subscribe();
-
+  window.privateChannel=supabaseClient.channel('public:private_messages')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{
+      const m=payload.new; if(!currentUser||currentGroupId||(m.sender!==currentChatUser&&m.receiver!==currentChatUser)) return;
+      appendMessage({username:m.sender,message:m.message,created_at:m.created_at},'other');
+    }).subscribe();
   if(window.typingChannel) window.typingChannel.unsubscribe();
-  window.typingChannel = supabaseClient.channel('public:typing_status').on('postgres_changes',{event:'*',schema:'public',table:'typing_status'},payload=>{const {username,typing}=payload.new;if(!currentUser||username===currentUser.username)return; if(typing) typingUsers.add(username); else typingUsers.delete(username); updateTypingIndicator();}).subscribe();
+  window.typingChannel=supabaseClient.channel('public:typing_status')
+    .on('postgres_changes',{event:'*',schema:'public',table:'typing_status'},payload=>{
+      const {username,typing}=payload.new; if(!currentUser||username===currentUser.username) return;
+      if(typing) typingUsers.add(username); else typingUsers.delete(username); updateTypingIndicator();
+    }).subscribe();
+}
+
+// ---------------- CREATE GROUP ----------------
+openGroupModalBtn.onclick=()=>{createGroupModal.style.display='flex';}
+closeModalBtn.onclick=()=>{createGroupModal.style.display='none'; selectedMembers=[]; renderSelectedMembers(); searchResults.innerHTML=''; groupNameInput.value=''; searchUserInput.value='';}
+searchUserInput.addEventListener('input',()=>{
+  const val=searchUserInput.value.toLowerCase(); searchResults.innerHTML='';
+  availableUsers.filter(u=>u.username.toLowerCase().includes(val)&&!selectedMembers.includes(u.username)).forEach(u=>{
+    const div=document.createElement('div'); div.className='user-search-result'; div.innerHTML=`<span>${u.username}</span><button>Add</button>`;
+    div.querySelector('button').onclick=()=>{selectedMembers.push(u.username); renderSelectedMembers(); div.remove();}
+    searchResults.appendChild(div);
+  });
+});
+function renderSelectedMembers(){selectedMembersDiv.innerHTML=''; selectedMembers.forEach(u=>{const span=document.createElement('div'); span.className='member-tag'; span.textContent=u; const btn=document.createElement('button'); btn.textContent='x'; btn.onclick=()=>{selectedMembers=selectedMembers.filter(x=>x!==u); renderSelectedMembers();}; span.appendChild(btn); selectedMembersDiv.appendChild(span);});}
+createGroupSubmit.onclick=async()=>{
+  const name=groupNameInput.value.trim(); if(!name||selectedMembers.length===0) return alert('Enter name and add members');
+  const { data:group } = await supabaseClient.from('groups').insert({name}).select().single();
+  await supabaseClient.from('group_members').insert(selectedMembers.map(u=>({username:u,group_id:group.id})));
+  selectedMembers=[]; groupNameInput.value=''; createGroupModal.style.display='none'; await loadUsers();
 }
 });
 </script>
