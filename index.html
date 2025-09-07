@@ -34,7 +34,7 @@ header { background:#0f1524; padding:1rem; text-align:center; font-size:1.5rem; 
 
 <div class="chatContainer">
   <div id="userList">
-    <h3>Online Users</h3>
+    <h3>Users</h3>
     <ul id="users"></ul>
   </div>
   <div class="chatMain">
@@ -95,12 +95,19 @@ document.addEventListener('DOMContentLoaded', () => {
   loginBtn.onclick=()=>{ const code=codeInput.value.trim(); if(!code)return alert('Enter your code'); loginWithCode(code); };
   const savedCode=localStorage.getItem('chatCode'); if(savedCode) loginWithCode(savedCode);
 
-  // ---------- ONLINE USERS ----------
-  async function updateOnlineStatus(){ if(!currentUser)return; await supabaseClient.from('chat_codes').update({last_seen:new Date().toISOString()}).eq('username',currentUser.username); }
-  setInterval(async()=>{
-    const { data } = await supabaseClient.from('chat_codes').select('username').gt('last_seen', new Date(Date.now()-10000).toISOString());
-    usersEl.innerHTML=''; data.forEach(u=>{ if(u.username===currentUser.username) return; const li=document.createElement('li'); li.textContent=u.username; li.onclick=()=>selectPrivateChat(u.username); usersEl.appendChild(li); });
-  },5000);
+  // ---------- USER LIST ----------
+  setInterval(async () => {
+    if(!currentUser) return;
+    const { data, error } = await supabaseClient.from('chat_codes').select('username');
+    if(error) return console.error(error);
+    usersEl.innerHTML='';
+    data.forEach(u=>{
+      if(u.username===currentUser.username) return;
+      const li=document.createElement('li'); li.textContent=u.username;
+      li.onclick=()=>selectPrivateChat(u.username);
+      usersEl.appendChild(li);
+    });
+  }, 5000);
 
   function selectPrivateChat(username){ privateChatUser=username; messagesEl.innerHTML=''; loadMessages(); }
 
@@ -149,23 +156,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------- REALTIME MESSAGES ----------
   function subscribeMessages(){
     if(window.messageChannel) window.messageChannel.unsubscribe();
-    window.messageChannel=supabaseClient.channel('messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{ const m=payload.new; if(!currentUser||m.username===currentUser.username) return; appendMessage(m,'other'); }).subscribe();
-    window.privateChannel=supabaseClient.channel('private_messages').on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{ const m=payload.new; if(!currentUser|| (m.sender!==currentUser.username && m.receiver!==currentUser.username)) return; appendMessage({username:m.sender,message:m.message,created_at:m.created_at},m.sender===currentUser.username?'self':'other'); }).subscribe();
+    window.messageChannel=supabaseClient.channel('public:global_messages')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{ const m=payload.new; if(!currentUser||m.username===currentUser.username) return; appendMessage(m,'other'); })
+      .subscribe();
+
+    if(window.privateChannel) window.privateChannel.unsubscribe();
+    window.privateChannel=supabaseClient.channel('public:private_messages')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'private_messages'},payload=>{
+        const m=payload.new;
+        if(!currentUser||(m.sender!==currentUser.username && m.receiver!==currentUser.username)) return;
+        appendMessage({username:m.sender,message:m.message,created_at:m.created_at},m.sender===currentUser.username?'self':'other');
+      }).subscribe();
   }
 
   // ---------- REALTIME TYPING ----------
   function subscribeTyping(){
     if(window.typingChannel) window.typingChannel.unsubscribe();
-    window.typingChannel=supabaseClient.channel('typing_status').on('postgres_changes',{event:'*',schema:'public',table:'typing_status'},payload=>{
-      const {username,typing}=payload.new;
-      if(!currentUser||username===currentUser.username) return;
-      if(typing) typingUsers.add(username); else typingUsers.delete(username);
-      updateTypingIndicator();
-    }).subscribe();
+    window.typingChannel=supabaseClient.channel('public:typing_status')
+      .on('postgres_changes',{event:'*',schema:'public',table:'typing_status'},payload=>{
+        const {username,typing}=payload.new;
+        if(!currentUser||username===currentUser.username) return;
+        if(typing) typingUsers.add(username); else typingUsers.delete(username);
+        updateTypingIndicator();
+      }).subscribe();
   }
 });
 </script>
 
 </body>
 </html>
-
