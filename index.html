@@ -20,6 +20,9 @@ header { background:#0f1524; padding:1rem; display:flex; justify-content:space-b
 .chatMain { display:flex; flex-direction:column; flex:1; }
 #typingIndicator { font-size:0.85rem; color:#7a7a7a; padding-left:1rem; margin-bottom:0.2rem; height:18px; }
 #messages { flex:1; padding:1rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; background:#101426; }
+#messages::-webkit-scrollbar { width:8px; }
+#messages::-webkit-scrollbar-track { background:#101426; }
+#messages::-webkit-scrollbar-thumb { background:#0b78e3; border-radius:4px; }
 .message { padding:0.6rem 1rem; border-radius:15px; max-width:65%; word-break:break-word; display:flex; align-items:center; }
 .message.self { background:#0b78e3; align-self:flex-end; color:#fff; flex-direction:row-reverse; }
 .message.other { background:#1c2335; align-self:flex-start; color:#fff; }
@@ -74,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentUser = null;
   let privateChatUser = null;
-  let unreadCounts = {}; // {username: count}
+  let unreadCounts = {};
 
   const messagesEl = document.getElementById('messages');
   const messageInput = document.getElementById('messageInput');
@@ -90,19 +93,17 @@ document.addEventListener('DOMContentLoaded', () => {
   let typingUsers = new Set();
   let typingTimeout;
 
-  // ---------- HELPERS ----------
   function getInitials(name){ return name.split(' ').map(n=>n[0].toUpperCase()).join('').slice(0,2); }
   function stringToColor(str){ let hash=0; for(let i=0;i<str.length;i++){hash=str.charCodeAt(i)+((hash<<5)-hash);} return `hsl(${hash%360},70%,50%)`; }
   function createProfileCircle(username){ const span=document.createElement('span'); span.className='profile-circle'; span.style.background = stringToColor(username); span.textContent=getInitials(username); return span; }
   function appendMessage(message,type){ const div=document.createElement('div'); div.className='message '+type; div.appendChild(createProfileCircle(message.username)); const content=document.createElement('span'); content.innerHTML=`<strong>${message.username}</strong>: ${message.message} <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>`; div.appendChild(content); messagesEl.appendChild(div); messagesEl.scrollTop = messagesEl.scrollHeight; }
   function updateTypingIndicator(){ if(typingUsers.size===0){ typingIndicator.textContent=''; return; } const names=Array.from(typingUsers); typingIndicator.textContent=names.length===1?`${names[0]} is typing...`:`${names.join(' and ')} are typing...`; }
 
-  function updateTitle(){ // update page title with total unread
+  function updateTitle(){
     const totalUnread = Object.values(unreadCounts).reduce((a,b)=>a+b,0);
     document.title = totalUnread>0 ? `(${totalUnread}) BHC Chat` : 'BHC Chat';
   }
 
-  // ---------- LOGIN ----------
   async function loginWithCode(code){
     try{
       const { data, error } = await client.from('chat_codes').select('username').eq('code', code).single();
@@ -114,23 +115,18 @@ document.addEventListener('DOMContentLoaded', () => {
   loginBtn.onclick=()=>{ const code=codeInput.value.trim(); if(!code)return alert('Enter your code'); loginWithCode(code); };
   const savedCode=localStorage.getItem('chatCode'); if(savedCode) loginWithCode(savedCode);
 
-  // ---------- USER LIST ----------
   async function loadUsers(){
     if(!currentUser) return;
-    const { data, error } = await client.from('chat_codes').select('username');
-    if(error) return console.error(error);
+    const { data } = await client.from('chat_codes').select('username');
     usersEl.innerHTML='';
     data.forEach(u=>{
       if(u.username===currentUser.username) return;
       const li = document.createElement('li');
       li.appendChild(createProfileCircle(u.username));
       const text = document.createElement('span'); text.textContent=u.username; li.appendChild(text);
-
-      // New Message indicator
       const newMsg = document.createElement('span'); newMsg.className='newMessage';
       newMsg.textContent = unreadCounts[u.username] ? '‼️New Message‼️' : '';
       li.appendChild(newMsg);
-
       li.onclick = () => selectPrivateChat(u.username, li);
       if(privateChatUser === u.username) li.classList.add('active');
       usersEl.appendChild(li);
@@ -140,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function selectPrivateChat(username, liElement){
     privateChatUser=username;
-    unreadCounts[username]=0; // reset unread
+    unreadCounts[username]=0;
     updateTitle();
     currentChatEl.textContent=username;
     returnGlobalBtn.style.display='inline-block';
@@ -157,7 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMessages();
   };
 
-  // ---------- SEND MESSAGE ----------
   async function sendMessage(){
     const msg=messageInput.value.trim(); if(!msg||!currentUser)return;
     const now = new Date().toISOString();
@@ -182,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
     typingTimeout=setTimeout(async()=>{ await client.from('typing_status').upsert({username:currentUser.username,typing:false,updated_at:new Date().toISOString()}); },2000);
   });
 
-  // ---------- LOAD MESSAGES ----------
   async function loadMessages(){
     let data=[];
     if(privateChatUser){
@@ -202,13 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ---------- REALTIME MESSAGES ----------
   function subscribeMessages(){
     if(window.messageChannel) window.messageChannel.unsubscribe();
     window.messageChannel = client.channel('public:global_messages')
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'global_messages'},payload=>{
         const m=payload.new; if(!currentUser || m.username===currentUser.username) return; appendMessage(m,'other');
-        if(!privateChatUser) incrementUnread('Global');
       }).subscribe();
 
     if(window.privateChannel) window.privateChannel.unsubscribe();
@@ -217,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const m=payload.new;
         if(!currentUser) return;
         if(m.sender!==currentUser.username && m.receiver===currentUser.username){
-          // increment unread for that user
           if(privateChatUser!==m.sender){
             if(!unreadCounts[m.sender]) unreadCounts[m.sender]=0;
             unreadCounts[m.sender]++;
@@ -229,11 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }).subscribe();
   }
 
-  function incrementUnread(chat){
-    if(chat==='Global') document.title='(1) BHC Chat'; // simple global unread
-  }
-
-  // ---------- REALTIME TYPING ----------
   function subscribeTyping(){
     if(window.typingChannel) window.typingChannel.unsubscribe();
     window.typingChannel=client.channel('public:typing_status')
@@ -244,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTypingIndicator();
       }).subscribe();
   }
+
 });
 </script>
 
