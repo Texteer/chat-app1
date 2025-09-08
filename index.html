@@ -3,51 +3,298 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>BHC Execlusive</title>
+<title>BHC Exclusive</title>
 <link rel="icon" href="chat-app1/favicon.jpg">
 <style>
 :root{
-  --bg:#0a0f1a; --panel:#101426; --muted:#7a7a7a; --accent:#0b78e3; --card:#1c2335;
+  --bg:#0d1117; /* darker background */
+  --panel:#1c1f26; /* darker panel */
+  --muted:#a0a0a0; /* muted text */
+  --accent:#3498db; /* softer blue for accents */
+  --card:#2c2f3a; /* darker card background */
 }
-body{margin:0;font-family:Segoe UI,system-ui,-apple-system,Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#fff;height:100vh;display:flex;flex-direction:column}
-header{background:#0f1524;padding:1rem;display:flex;align-items:center;justify-content:space-between}
-#currentChat{font-size:0.95rem;color:var(--muted)}
-#returnGlobalBtn{display:none;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer}
-#chatContainer{display:flex;flex:1;overflow:hidden}
-#userList{width:240px;border-right:1px solid #1c2335;overflow-y:auto;padding:0.6rem;background:transparent}
-#userList::-webkit-scrollbar{width:10px}
-#userList::-webkit-scrollbar-thumb{background:#141a2c;border-radius:6px}
-#userList h3{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px 0}
-#groupButton{background:var(--accent);border:none;color:#fff;border-radius:6px;padding:6px 8px;cursor:pointer;font-size:0.85rem}
-ul.list{list-style:none;padding:0;margin:0}
-ul.list li{display:flex;align-items:center;gap:8px;padding:8px;border-radius:6px;cursor:pointer;flex-direction:column;align-items:flex-start}
-ul.list li:hover{background:var(--card)}
-ul.list li.active{background:var(--accent)}
-.user-name{display:flex;align-items:center;gap:8px;width:100%;justify-content:space-between}
-.user-meta{display:flex;flex-direction:row;align-items:center;gap:8px}
-.user-notif{font-size:0.75rem;color:#ff4d4d}
-.profile-circle{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;font-weight:700;font-size:0.85rem;color:#fff;flex-shrink:0}
-.chatMain{flex:1;display:flex;flex-direction:column}
-#typingIndicator{height:18px;padding:8px 12px;color:var(--muted);font-size:0.85rem}
-#messages{flex:1;padding:14px;overflow:auto;display:flex;flex-direction:column;gap:8px;background:var(--panel);scrollbar-width:thin;scrollbar-color:var(--accent) var(--panel)}
-#messages::-webkit-scrollbar{width:8px}
-#messages::-webkit-scrollbar-track{background:var(--panel)}
-#messages::-webkit-scrollbar-thumb{background:var(--accent);border-radius:6px}
-.message{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;max-width:70%;word-break:break-word}
-.message.self{margin-left:auto;background:var(--accent);flex-direction:row-reverse}
-.message.other{margin-right:auto;background:var(--card)}
-.timestamp{font-size:0.65rem;color:var(--muted);margin-left:6px;margin-right:6px}
-#input{display:flex;padding:10px;background:#141a2c;border-top:1px solid #1c2335}
-#messageInput{flex:1;padding:10px;border-radius:20px 0 0 20px;border:none;background:#101426;color:#fff}
-#sendBtn{padding:10px 14px;border:none;border-radius:0 20px 20px 0;background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:50}
-.modal{background:var(--panel);padding:18px;border-radius:12px;width:420px;max-height:80vh;overflow:auto;position:relative}
-.closeButton{position:absolute;right:12px;top:12px;background:var(--accent);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer}
-.group-user{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px}
-.selected-pill{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--accent);margin:4px}
-.small{font-size:0.85rem}
-/* New styles for search box */
-#userSearch {
+
+body {
+  margin: 0;
+  font-family: Segoe UI, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: #eee; /* lighter text for contrast */
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header styles */
+header {
+  background: #1f2333;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+}
+
+/* Chat info */
+#currentChat {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+#returnGlobalBtn {
+  display: none;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+/* Container */
+#chatContainer {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* User list styles */
+#userList {
+  width: 240px;
+  border-right: 1px solid #2c2f3a;
+  overflow-y: auto;
+  padding: 0.6rem;
+  background: #1f2333;
+  color: #ccc;
+}
+#userList::-webkit-scrollbar {
+  width: 10px;
+}
+#userList::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 6px;
+}
+#userList h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+}
+#groupButton {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+ul.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+ul.list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: flex-start;
+}
+ul.list li:hover {
+  background: #2c2f3a;
+}
+ul.list li.active {
+  background: var(--accent);
+}
+.user-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: space-between;
+}
+.user-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.user-notif {
+  font-size: 0.75rem;
+  color: #ff4d4d;
+}
+
+/* Profile circle styles */
+.profile-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff;
+  flex-shrink: 0;
+  background-color: #555; /* fallback, overridden by colorFor function */
+}
+
+/* Main chat area */
+.chatMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typing indicator */
+#typingIndicator {
+  height: 18px;
+  padding: 8px 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Messages area */
+#messages {
+  flex: 1;
+  padding: 14px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--panel);
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--panel);
+}
+#messages::-webkit-scrollbar {
+  width: 8px;
+}
+#messages::-webkit-scrollbar-track {
+  background: var(--panel);
+}
+#messages::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 6px;
+}
+
+/* Message styles */
+.message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 70%;
+  word-break: break-word;
+}
+.message.self {
+  margin-left: auto;
+  background: var(--accent);
+  flex-direction: row-reverse;
+}
+.message.other {
+  margin-right: auto;
+  background: #2c2f3a;
+}
+.timestamp {
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-left: 6px;
+  margin-right: 6px;
+}
+
+/* Input area */
+#input {
+  display: flex;
+  padding: 10px;
+  background: #1f2333;
+  border-top: 1px solid #2c2f3a;
+}
+#messageInput {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px 0 0 20px;
+  border: none;
+  outline: none;
+  background: #2c2f3a;
+  color: #eee;
+}
+#sendBtn {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 0 20px 20px 0;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+#sendBtn:hover {
+  background: #2980b9;
+}
+
+/* Modals */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal {
+  background: #222; /* darker modal background */
+  padding: 18px;
+  border-radius: 12px;
+  width: 420px;
+  max-height: 80vh;
+  overflow: auto;
+  color: #eee;
+}
+.closeButton {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Group user styles */
+.group-user {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px;
+  border-radius: 6px;
+  background: #2c2f3a;
+}
+.selected-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  margin: 4px;
+  color: #fff;
+}
+.small {
+  font-size: 0.85rem;
+}
+
+/* Search box styles */
+#userSearch, #searchUserInput {
   width: 100%;
   margin-bottom: 8px;
   padding: 6px;
@@ -55,6 +302,11 @@ ul.list li.active{background:var(--accent)}
   border: none;
   outline: none;
   font-size: 0.9rem;
+  background: #2c2f3a;
+  color: #eee;
+}
+#userSearch::placeholder, #searchUserInput::placeholder {
+  color: #777;
 }
 </style>
 </head>
@@ -70,7 +322,6 @@ ul.list li.active{background:var(--accent)}
 <div id="chatContainer">
   <aside id="userList">
     <h3>Users <button id="groupButton" title="Create group">+ Group</button></h3>
-    <!-- Added search box here -->
     <input type="text" id="userSearch" placeholder="Search users..." />
     <ul id="users" class="list"></ul>
   </aside>
@@ -114,18 +365,18 @@ ul.list li.active{background:var(--accent)}
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   const SUPABASE_URL = 'https://azpgwbxillscpwrraprl.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6cGd3YnhpbGxzY3B3cnJhcHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg1MjQsImV4cCI6MjA3MjYzNDUyNH0.h7ZDxtH4pB3K5IzRB9goLJ1ldrY6EGf7CWT-ELGQ0i0'; // Replace with your actual key
   const supabase = window.supabase;
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // state
-  let currentUser = null;            // { username }
-  let privateChatUser = null;        // username string
-  let currentGroup = null;           // { id, name, creator }
-  let unreadCounts = {};            // key -> count (username for DMs, groupId for groups, 'global' for global)
-  let selectedUsers = [];           // for group creation
+  // State variables
+  let currentUser = null;
+  let privateChatUser = null;
+  let currentGroup = null;
+  let unreadCounts = {};
+  let selectedUsers = [];
 
-  // elements
+  // Elements
   const authModal = document.getElementById('authModal');
   const codeInput = document.getElementById('codeInput');
   const loginBtn = document.getElementById('loginBtn');
@@ -143,13 +394,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   const searchUserInput = document.getElementById('searchUserInput');
   const searchResults = document.getElementById('searchResults');
   const selectedUsersWrap = document.getElementById('selectedUsersWrap');
-  const createGroupSubmit = document.getElementById('createGroupSubmit');
+  const createGroupBtn = document.getElementById('createGroupSubmit');
   const cancelGroupBtn = document.getElementById('cancelGroupBtn');
 
-  // helpers
+  // Helper functions
   function initials(name){ return name.split(' ').map(n=>n[0]?.toUpperCase()||'').join('').slice(0,2); }
-  function colorFor(name){ let h=0; for(let i=0;i<name.length;i++){ h=name.charCodeAt(i)+((h<<5)-h);} return `hsl(${Math.abs(h)%360} 70% 50%)`; }
-  function profileCircle(name){ const s=document.createElement('span'); s.className='profile-circle'; s.style.background=colorFor(name); s.textContent=initials(name); return s; }
+  function colorFor(name){ 
+    let h=0; 
+    for(let i=0;i<name.length;i++){ 
+      h=name.charCodeAt(i)+((h<<5)-h);
+    } 
+    return `hsl(${Math.abs(h)%360} 70% 50%)`; 
+  }
+  function profileCircle(name){ 
+    const s=document.createElement('span'); 
+    s.className='profile-circle'; 
+    s.style.background=colorFor(name); 
+    s.textContent=initials(name); 
+    return s; 
+  }
 
   function updateTitle(){
     const total = Object.values(unreadCounts).reduce((a,b)=>a+(b||0),0);
@@ -158,9 +421,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function clearMessages(){ messagesEl.innerHTML=''; messagesEl.scrollTop=0; }
 
-  function appendMessageObj({who,text,at}, type){
+  function appendMessageObj({who, text, at}, type){
     const div = document.createElement('div');
-    div.className = 'message ' + (type==='self' ? 'self' : 'other');
+    div.className='message ' + (type==='self' ? 'self' : 'other');
     div.appendChild(profileCircle(who));
     const span = document.createElement('span');
     span.innerHTML = `<strong>${who}</strong>: ${escapeHtml(text)} <span class="timestamp">${new Date(at).toLocaleTimeString()}</span>`;
@@ -174,7 +437,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return str.replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
   }
 
-  // ---------- login ----------
+  // --- Login ---
   async function loginWithCode(code){
     try{
       const { data, error } = await client.from('chat_codes').select('username').eq('code', code).single();
@@ -189,118 +452,108 @@ document.addEventListener('DOMContentLoaded', async () => {
     }catch(err){ console.error(err); alert('Login failed'); }
   }
   loginBtn.onclick = ()=>{ const c = codeInput.value.trim(); if(!c) return alert('Enter your code'); loginWithCode(c); };
-  const saved = localStorage.getItem('chatCode');
-  if(saved) loginWithCode(saved).catch(()=>{/*ignore*/});
+  const savedCode = localStorage.getItem('chatCode');
+  if(savedCode) loginWithCode(savedCode).catch(()=>{});
 
-  // ---------- users & groups list ----------
+  // --- Load users and groups ---
   async function loadUsersAndGroups(){
     if(!currentUser) return;
-    // users
+    // Fetch users
     const { data: users } = await client.from('chat_codes').select('username').order('username',{ascending:true});
-    // groups where current user is a member
+    // Fetch groups where current user is member
     const { data: memberships } = await client
       .from('group_members')
       .select('group_id, groups(id,name,creator)')
       .eq('username', currentUser.username);
+    usersEl.innerHTML='';
 
-    usersEl.innerHTML = '';
-
-    // users first
-    users.forEach(u=>{
-      if(u.username === currentUser.username) return;
+    // Users
+    users.forEach(u => {
+      if(u.username===currentUser.username) return;
       const li = document.createElement('li');
       const nameDiv = document.createElement('div'); nameDiv.className='user-name';
       const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
       left.appendChild(profileCircle(u.username));
-      const txt = document.createElement('span'); txt.textContent = u.username; left.appendChild(txt);
+      const txt = document.createElement('span'); txt.textContent=u.username;
+      left.appendChild(txt);
       nameDiv.appendChild(left);
-
       const meta = document.createElement('div'); meta.className='user-meta';
       const notif = document.createElement('span'); notif.className='user-notif';
-      if(unreadCounts[u.username]) notif.textContent = '‼️New Message‼️';
+      if(unreadCounts[u.username]) notif.textContent='‼️New Message‼️';
       meta.appendChild(notif);
       nameDiv.appendChild(meta);
-
       li.appendChild(nameDiv);
-      li.onclick = ()=> {
-        // move this user to the top
-        if(li.parentNode) {
-          li.parentNode.insertBefore(li, li.parentNode.firstChild);
-        }
+      li.onclick = ()=>{
+        // move to top
+        if(li.parentNode) li.parentNode.insertBefore(li, li.parentNode.firstChild);
         selectPrivateChat(u.username, li);
       };
-      if(privateChatUser === u.username) li.classList.add('active');
+      if(privateChatUser===u.username) li.classList.add('active');
       usersEl.appendChild(li);
     });
-
-    // then groups the user belongs to
-    (memberships||[]).forEach(m=>{
+    // Groups
+    (memberships||[]).forEach(m => {
       const g = m.groups;
       if(!g) return;
       const li = document.createElement('li');
       const nameDiv = document.createElement('div'); nameDiv.className='user-name';
       const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
       left.appendChild(profileCircle(g.name));
-      const txt = document.createElement('span'); txt.textContent = g.name; left.appendChild(txt);
+      const txt = document.createElement('span'); txt.textContent=g.name;
+      left.appendChild(txt);
       nameDiv.appendChild(left);
-
       const meta = document.createElement('div'); meta.className='user-meta';
       const notif = document.createElement('span'); notif.className='user-notif';
-      if(unreadCounts[g.id]) notif.textContent = '‼️New Message‼️';
+      if(unreadCounts[g.id]) notif.textContent='‼️New Message‼️';
       meta.appendChild(notif);
       nameDiv.appendChild(meta);
-
       li.appendChild(nameDiv);
-      li.onclick = ()=> {
-        // move this group to the top
-        if(li.parentNode) {
-          li.parentNode.insertBefore(li, li.parentNode.firstChild);
-        }
-        selectGroupChat(g, li);
+      li.onclick = ()=>{
+        if(li.parentNode) li.parentNode.insertBefore(li,li.parentNode.firstChild);
+        selectGroupChat(g,li);
       };
-      if(currentGroup && currentGroup.id === g.id) li.classList.add('active');
+      if(currentGroup && currentGroup.id===g.id) li.classList.add('active');
       usersEl.appendChild(li);
     });
-
     updateTitle();
   }
 
-  // ---------- select chat ----------
+  // --- Select chat ---
   async function selectPrivateChat(username, liElement){
     privateChatUser = username;
     currentGroup = null;
     currentChatEl.textContent = username;
-    returnGlobalBtn.style.display = 'inline-block';
+    returnGlobalBtn.style.display='inline-block';
     [...usersEl.children].forEach(li=>li.classList.remove('active'));
     if(liElement) liElement.classList.add('active');
-    unreadCounts[username] = 0;
+    unreadCounts[username]=0;
     updateTitle();
     await loadMessages();
   }
 
   async function selectGroupChat(group, liElement){
-    currentGroup = group;
-    privateChatUser = null;
-    currentChatEl.textContent = group.name;
-    returnGlobalBtn.style.display = 'inline-block';
+    currentGroup=group;
+    privateChatUser=null;
+    currentChatEl.textContent=group.name;
+    returnGlobalBtn.style.display='inline-block';
     [...usersEl.children].forEach(li=>li.classList.remove('active'));
     if(liElement) liElement.classList.add('active');
-    unreadCounts[group.id] = 0;
+    unreadCounts[group.id]=0;
     updateTitle();
     await loadMessages();
   }
 
-  returnGlobalBtn.onclick = async () => {
-    privateChatUser = null;
-    currentGroup = null;
-    currentChatEl.textContent = 'Global Chat';
-    returnGlobalBtn.style.display = 'none';
+  returnGlobalBtn.onclick=async ()=>{
+    privateChatUser=null;
+    currentGroup=null;
+    currentChatEl.textContent='Global Chat';
+    returnGlobalBtn.style.display='none';
     [...usersEl.children].forEach(li=>li.classList.remove('active'));
     await loadMessages();
   };
 
-  // ---------- load messages ----------
-  async function loadMessages(){
+  // --- Load messages ---
+  async function loadMessages() {
     clearMessages();
     if(!currentUser) return;
     if(privateChatUser){
@@ -309,28 +562,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         .or(`and(sender.eq.${currentUser.username},receiver.eq.${privateChatUser}),and(sender.eq.${privateChatUser},receiver.eq.${currentUser.username})`)
         .order('created_at',{ascending:true});
       const { data } = await q;
-      (data||[]).forEach(m => appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other'));
+      (data||[]).forEach(m => appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender===currentUser.username?'self':'other'));
       return;
     }
     if(currentGroup){
       const { data } = await client.from('group_messages').select('*').eq('group_id', currentGroup.id).order('created_at',{ascending:true});
-      (data||[]).forEach(m => appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other'));
+      (data||[]).forEach(m => appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender===currentUser.username?'self':'other'));
       return;
     }
     // global
     const { data } = await client.from('global_messages').select('*').order('created_at',{ascending:true});
-    (data||[]).forEach(m => appendMessageObj({ who: m.username, text: m.message, at: m.created_at }, m.username === currentUser.username ? 'self' : 'other'));
+    (data||[]).forEach(m => appendMessageObj({ who: m.username, text: m.message, at: m.created_at }, m.username===currentUser.username?'self':'other'));
   }
 
-  // ---------- send message (no local append; rely on realtime) ----------
-  sendBtn.onclick = sendMessage;
-  messageInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
-
-  async function sendMessage(){
+  // --- Send message ---
+  sendBtn.onclick=sendMessage;
+  messageInput.addEventListener('keypress', e => { if(e.key==='Enter') sendMessage(); });
+  async function sendMessage() {
     const text = messageInput.value.trim();
     if(!text || !currentUser) return;
     const now = new Date().toISOString();
-
     try{
       if(privateChatUser){
         await client.from('private_messages').insert([{ sender: currentUser.username, receiver: privateChatUser, message: text, created_at: now }]);
@@ -340,59 +591,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         await client.from('global_messages').insert([{ username: currentUser.username, message: text, created_at: now }]);
       }
     }catch(err){ console.error('send error', err); }
-    messageInput.value = '';
-    // set typing false
-    await client.from('typing_status').upsert({ username: currentUser.username, typing: false, updated_at: new Date().toISOString() });
+    messageInput.value='';
+    await client.from('typing_status').upsert({ username: currentUser.username, typing:false, updated_at: new Date().toISOString() });
   }
 
-  // ---------- typing ----------
-  messageInput.addEventListener('input', async () => {
+  // --- Typing ---
+  messageInput.addEventListener('input', async ()=>{
     if(!currentUser) return;
-    await client.from('typing_status').upsert({ username: currentUser.username, typing: true, updated_at: new Date().toISOString() });
+    await client.from('typing_status').upsert({ username: currentUser.username, typing:true, updated_at: new Date().toISOString() });
     clearTimeout(window._typingTO);
-    window._typingTO = setTimeout(async () => {
-      await client.from('typing_status').upsert({ username: currentUser.username, typing: false, updated_at: new Date().toISOString() });
-    }, 1600);
+    window._typingTO=setTimeout(async ()=>{
+      await client.from('typing_status').upsert({ username: currentUser.username, typing:false, updated_at: new Date().toISOString() });
+    },1600);
   });
 
-  // ---------- realtime subscriptions ----------
-  function subscribeAll(){
-    // global messages
+  // --- Subscriptions ---
+  function subscribeAll() {
     if(window._globalSub) window._globalSub.unsubscribe();
-    window._globalSub = client.channel('public:global_messages')
-      .on('postgres_changes', { event:'INSERT', schema:'public', table:'global_messages' }, payload => {
-        const m = payload.new;
+    window._globalSub=client.channel('public:global_messages')
+      .on('postgres_changes',{ event:'INSERT', schema:'public', table:'global_messages' }, payload => {
+        const m=payload.new;
         if(!currentUser) return;
-        // append only when viewing global
         if(!currentGroup && !privateChatUser){
-          appendMessageObj({ who: m.username, text: m.message, at: m.created_at }, m.username === currentUser.username ? 'self' : 'other');
+          appendMessageObj({ who: m.username, text: m.message, at: m.created_at }, m.username===currentUser.username?'self':'other');
         }
-        // increment unread if not viewing global and not sent by self
-        if( (currentGroup || privateChatUser) && m.username !== currentUser.username ){
-          unreadCounts['global'] = (unreadCounts['global'] || 0) + 1;
+        if((currentGroup || privateChatUser) && m.username!==currentUser.username){
+          unreadCounts['global']=(unreadCounts['global']||0)+1;
           updateTitle();
-          // update small badge by reloading users list (cheap)
           loadUsersAndGroups().catch(()=>{});
         }
       }).subscribe();
 
     // private messages
     if(window._privateSub) window._privateSub.unsubscribe();
-    window._privateSub = client.channel('public:private_messages')
-      .on('postgres_changes', { event:'INSERT', schema:'public', table:'private_messages' }, payload => {
-        const m = payload.new;
+    window._privateSub=client.channel('public:private_messages')
+      .on('postgres_changes',{ event:'INSERT', schema:'public', table:'private_messages' }, payload => {
+        const m=payload.new;
         if(!currentUser) return;
-        // message relevant to me?
-        if(m.receiver === currentUser.username || m.sender === currentUser.username){
-          // if viewing that private chat, append
-          if(privateChatUser && ( (m.sender === privateChatUser && m.receiver === currentUser.username) || (m.sender === currentUser.username && m.receiver === privateChatUser) )){
-            appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other');
+        if(m.receiver===currentUser.username || m.sender===currentUser.username){
+          if(privateChatUser && ((m.sender===privateChatUser && m.receiver===currentUser.username)||(m.sender===currentUser.username && m.receiver===privateChatUser))){
+            appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender===currentUser.username?'self':'other');
           } else {
-            // not viewing that DM -> increment unread for sender if I am receiver
-            if(m.receiver === currentUser.username && m.sender !== currentUser.username){
-              unreadCounts[m.sender] = (unreadCounts[m.sender] || 0) + 1;
+            if(m.receiver===currentUser.username && m.sender!==currentUser.username){
+              unreadCounts[m.sender]=(unreadCounts[m.sender]||0)+1;
               updateTitle();
-              // update user list badges
               loadUsersAndGroups().catch(()=>{});
             }
           }
@@ -401,16 +643,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // group messages
     if(window._groupSub) window._groupSub.unsubscribe();
-    window._groupSub = client.channel('public:group_messages')
-      .on('postgres_changes', { event:'INSERT', schema:'public', table:'group_messages' }, payload => {
-        const m = payload.new;
+    window._groupSub=client.channel('public:group_messages')
+      .on('postgres_changes',{ event:'INSERT', schema:'public', table:'group_messages' }, payload => {
+        const m=payload.new;
         if(!currentUser) return;
-        if(currentGroup && currentGroup.id === m.group_id){
-          appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender === currentUser.username ? 'self' : 'other');
+        if(currentGroup && currentGroup.id===m.group_id){
+          appendMessageObj({ who: m.sender, text: m.message, at: m.created_at }, m.sender===currentUser.username?'self':'other');
         } else {
-          // increment unread for that group (if I'm not viewing it)
-          if(m.sender !== currentUser.username){
-            unreadCounts[m.group_id] = (unreadCounts[m.group_id] || 0) + 1;
+          if(m.sender!==currentUser.username){
+            unreadCounts[m.group_id]=(unreadCounts[m.group_id]||0)+1;
             updateTitle();
             loadUsersAndGroups().catch(()=>{});
           }
@@ -418,50 +659,49 @@ document.addEventListener('DOMContentLoaded', async () => {
       }).subscribe();
   }
 
-  // typing subscription
-  function subscribeTyping(){
+  function subscribeTyping() {
     if(window._typingSub) window._typingSub.unsubscribe();
-    window._typingSub = client.channel('public:typing_status')
-      .on('postgres_changes', { event:'*', schema:'public', table:'typing_status' }, payload => {
-        const { username, typing } = payload.new;
-        if(!currentUser || username === currentUser.username) return;
-        if(typing) window._typingSet = window._typingSet || new Set(), window._typingSet.add(username);
-        else (window._typingSet || new Set()).delete(username);
-        // show typing if they are in current chat (simple approach)
-        if(privateChatUser && window._typingSet && window._typingSet.has(privateChatUser)){
-          document.getElementById('typingIndicator').textContent = `${privateChatUser} is typing...`;
-        } else if(currentGroup){
-          // if any group member typing (we don't fetch group members here for performance),
-          // show generic "Someone is typing..." when any typing exists (excluding currentUser)
-          const anyTyping = Array.from(window._typingSet || []).length > 0;
-          document.getElementById('typingIndicator').textContent = anyTyping ? 'Someone is typing...' : '';
+    window._typingSub=client.channel('public:typing_status')
+      .on('postgres_changes',{ event:'*', schema:'public', table:'typing_status' }, payload => {
+        const { username, typing }=payload.new;
+        if(!currentUser || username===currentUser.username) return;
+        if(typing) {
+          window._typingSet=new Set(); window._typingSet.add(username);
         } else {
-          document.getElementById('typingIndicator').textContent = '';
+          if(window._typingSet) window._typingSet.delete(username);
+        }
+        if(privateChatUser && window._typingSet && window._typingSet.has(privateChatUser)){
+          document.getElementById('typingIndicator').textContent=`${privateChatUser} is typing...`;
+        } else if(currentGroup){
+          const anyTyping=Array.from(window._typingSet||[]).length>0;
+          document.getElementById('typingIndicator').textContent=anyTyping?'Someone is typing...':'';
+        } else {
+          document.getElementById('typingIndicator').textContent='';
         }
       }).subscribe();
   }
 
-  // ---------- group creation UI ----------
-  groupButton.onclick = () => {
+  // --- Group creation UI ---
+  document.getElementById('groupButton').onclick=()=>{
     if(!currentUser) return alert('Login first');
-    selectedUsers = [];
-    selectedUsersWrap.innerHTML = '';
-    searchUserInput.value = '';
-    searchResults.innerHTML = '';
-    groupNameInput.value = '';
-    groupModal.style.display = 'flex';
+    selectedUsers=[];
+    selectedUsersWrap.innerHTML='';
+    searchUserInput.value='';
+    searchResults.innerHTML='';
+    groupNameInput.value='';
+    groupModal.style.display='flex';
   };
-  document.getElementById('closeGroupModal').onclick = () => { groupModal.style.display = 'none'; };
-  document.getElementById('cancelGroupBtn').onclick = () => { groupModal.style.display = 'none'; };
+  document.getElementById('closeGroupModal').onclick=()=>{ groupModal.style.display='none'; };
+  document.getElementById('cancelGroupBtn').onclick=()=>{ groupModal.style.display='none'; };
 
-  function renderSelectedPills(){
-    selectedUsersWrap.innerHTML = '';
-    selectedUsers.forEach(u=>{
-      const pill = document.createElement('span');
-      pill.className = 'selected-pill small';
-      pill.textContent = u + ' ✖';
-      pill.onclick = () => {
-        selectedUsers = selectedUsers.filter(x => x !== u);
+  function renderSelectedPills() {
+    selectedUsersWrap.innerHTML='';
+    selectedUsers.forEach(u => {
+      const pill=document.createElement('span');
+      pill.className='selected-pill small';
+      pill.textContent=u+' ✖';
+      pill.onclick=()=>{
+        selectedUsers=selectedUsers.filter(x=>x!==u);
         renderSelectedPills();
         searchUsers(searchUserInput.value);
       };
@@ -470,63 +710,70 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function searchUsers(query){
-    searchResults.innerHTML = '';
-    const q = (query||'').trim();
+    searchResults.innerHTML='';
+    const q=(query||'').trim();
     if(!q) return;
-    const { data } = await client.from('chat_codes').select('username').ilike('username', `%${q}%`).limit(20);
+    const {data}=await client.from('chat_codes').select('username').ilike('username',`%${q}%`).limit(20);
     (data||[]).forEach(u=>{
-      if(u.username === currentUser.username) return;
+      if(u.username===currentUser.username) return;
       if(selectedUsers.includes(u.username)) return;
-      const row = document.createElement('div');
-      row.className = 'group-user';
-      const name = document.createElement('div'); name.textContent = u.username;
-      const btn = document.createElement('button'); btn.textContent = 'Add';
-      btn.onclick = () => { selectedUsers.push(u.username); renderSelectedPills(); searchUsers(query); };
+      const row=document.createElement('div');
+      row.className='group-user';
+      const name=document.createElement('div'); name.textContent=u.username;
+      const btn=document.createElement('button'); btn.textContent='Add';
+      btn.onclick=()=>{ selectedUsers.push(u.username); renderSelectedPills(); searchUsers(searchUserInput.value); };
       row.appendChild(name); row.appendChild(btn);
       searchResults.appendChild(row);
     });
   }
+  document.getElementById('searchUserInput').addEventListener('input', (e)=>{searchUsers(e.target.value);});
 
-  document.getElementById('searchUserInput').addEventListener('input', e => searchUsers(e.target.value));
-
-  document.getElementById('createGroupSubmit').onclick = async () => {
-    const name = groupNameInput.value.trim();
+  document.getElementById('createGroupSubmit').onclick=async()=>{
+    const name=groupNameInput.value.trim();
     if(!name) return alert('Enter a group name');
-    if(selectedUsers.length === 0) return alert('Add at least one user');
-    // create group and add members (including creator)
+    if(selectedUsers.length===0) return alert('Add at least one user');
     try{
-      const { data: group } = await client.from('groups').insert([{ name, creator: currentUser.username }]).select().single();
-      const members = selectedUsers.map(u => ({ group_id: group.id, username: u }));
+      const {data: group}=await client.from('groups').insert([{ name, creator: currentUser.username }]).select().single();
+      const members=selectedUsers.map(u=>({ group_id: group.id, username: u }));
       members.push({ group_id: group.id, username: currentUser.username });
       await client.from('group_members').insert(members);
-      groupModal.style.display = 'none';
-      selectedUsers = [];
+      groupModal.style.display='none';
+      selectedUsers=[];
       await loadUsersAndGroups();
-    }catch(err){ console.error('create group error', err); alert('Failed to create group'); }
+    }catch(err){ console.error('create group error',err); alert('Failed to create group'); }
   };
 
-  // update list regularly (or on events)
-  setInterval(()=>{ if(currentUser) loadUsersAndGroups(); }, 12000);
+  setInterval(()=>{if(currentUser) loadUsersAndGroups();},12000);
 
-  // initial: nothing until login
-  // Expose a few helpers for debugging in console (optional)
-  window._bhc = { client, loadUsersAndGroups, loadMessages, subscribeAll };
-
-  // ---------- Search filter for user list ----------
-  const userSearch = document.getElementById('userSearch');
-  userSearch.addEventListener('input', () => {
-    const filter = userSearch.value.toLowerCase();
-    const userItems = document.querySelectorAll('#users li');
-    userItems.forEach(li => {
-      const usernameSpan = li.querySelector('.user-name span');
-      const usernameText = usernameSpan ? usernameSpan.textContent.toLowerCase() : '';
-      if (usernameText.includes(filter)) {
-        li.style.display = '';
-      } else {
-        li.style.display = 'none';
-      }
+  // --- Search filter for user list ---
+  const userSearch=document.getElementById('userSearch');
+  userSearch.addEventListener('input', ()=>{
+    const filter=userSearch.value.toLowerCase();
+    document.querySelectorAll('#users li').forEach(li => {
+      const nameSpan=li.querySelector('.user-name span');
+      const nameText=nameSpan?nameSpan.textContent.toLowerCase():'';
+      li.style.display= nameText.includes(filter)?'':'none';
     });
   });
+
+  // --- Login with code ---
+  async function loginWithCode(code){
+    try{
+      const { data, error }=await client.from('chat_codes').select('username').eq('code', code).single();
+      if(error || !data){ alert('Invalid code'); return; }
+      currentUser={ username: data.username };
+      localStorage.setItem('chatCode', code);
+      authModal.style.display='none';
+      await loadUsersAndGroups();
+      await loadMessages();
+      subscribeAll();
+      subscribeTyping();
+    }catch(err){ console.error(err); alert('Login failed'); }
+  }
+  document.getElementById('loginBtn').onclick=()=>{ const c=codeInput.value.trim(); if(!c) return alert('Enter your code'); loginWithCode(c); };
+  const savedCode=localStorage.getItem('chatCode');
+  if(savedCode) loginWithCode(savedCode).catch(()=>{});
+
 });
 </script>
 </body>
