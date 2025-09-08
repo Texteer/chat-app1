@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>BHC Chat</title>
+<title>BHC Execlusive</title>
 <link rel="icon" href="chat-app1/favicon.jpg">
 <style>
 :root{
@@ -46,6 +46,16 @@ ul.list li.active{background:var(--accent)}
 .group-user{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px}
 .selected-pill{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--accent);margin:4px}
 .small{font-size:0.85rem}
+/* New styles for search box */
+#userSearch {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 6px;
+  border-radius: 4px;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+}
 </style>
 </head>
 <body>
@@ -60,6 +70,8 @@ ul.list li.active{background:var(--accent)}
 <div id="chatContainer">
   <aside id="userList">
     <h3>Users <button id="groupButton" title="Create group">+ Group</button></h3>
+    <!-- Added search box here -->
+    <input type="text" id="userSearch" placeholder="Search users..." />
     <ul id="users" class="list"></ul>
   </aside>
 
@@ -67,7 +79,7 @@ ul.list li.active{background:var(--accent)}
     <div id="typingIndicator"></div>
     <div id="messages" role="log" aria-live="polite"></div>
     <div id="input">
-      <input id="messageInput" placeholder="Type your message..." autocomplete="off" />
+      <input id="messageInput" placeholder="Type your message..." autocomplete="off" maxlength="200" />
       <button id="sendBtn">Send</button>
     </div>
   </main>
@@ -210,7 +222,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       nameDiv.appendChild(meta);
 
       li.appendChild(nameDiv);
-      li.onclick = ()=>selectPrivateChat(u.username, li);
+      li.onclick = ()=> {
+        // move this user to the top
+        if(li.parentNode) {
+          li.parentNode.insertBefore(li, li.parentNode.firstChild);
+        }
+        selectPrivateChat(u.username, li);
+      };
       if(privateChatUser === u.username) li.classList.add('active');
       usersEl.appendChild(li);
     });
@@ -233,7 +251,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       nameDiv.appendChild(meta);
 
       li.appendChild(nameDiv);
-      li.onclick = ()=>selectGroupChat(g, li);
+      li.onclick = ()=> {
+        // move this group to the top
+        if(li.parentNode) {
+          li.parentNode.insertBefore(li, li.parentNode.firstChild);
+        }
+        selectGroupChat(g, li);
+      };
       if(currentGroup && currentGroup.id === g.id) li.classList.add('active');
       usersEl.appendChild(li);
     });
@@ -427,8 +451,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     groupNameInput.value = '';
     groupModal.style.display = 'flex';
   };
-  closeGroupModal.onclick = () => { groupModal.style.display = 'none'; };
-  cancelGroupBtn.onclick = () => { groupModal.style.display = 'none'; };
+  document.getElementById('closeGroupModal').onclick = () => { groupModal.style.display = 'none'; };
+  document.getElementById('cancelGroupBtn').onclick = () => { groupModal.style.display = 'none'; };
 
   function renderSelectedPills(){
     selectedUsersWrap.innerHTML = '';
@@ -463,9 +487,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  searchUserInput.addEventListener('input', e => searchUsers(e.target.value));
+  document.getElementById('searchUserInput').addEventListener('input', e => searchUsers(e.target.value));
 
-  createGroupSubmit.onclick = async () => {
+  document.getElementById('createGroupSubmit').onclick = async () => {
     const name = groupNameInput.value.trim();
     if(!name) return alert('Enter a group name');
     if(selectedUsers.length === 0) return alert('Add at least one user');
@@ -488,6 +512,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Expose a few helpers for debugging in console (optional)
   window._bhc = { client, loadUsersAndGroups, loadMessages, subscribeAll };
 
+  // ---------- Search filter for user list ----------
+  const userSearch = document.getElementById('userSearch');
+  userSearch.addEventListener('input', () => {
+    const filter = userSearch.value.toLowerCase();
+    const userItems = document.querySelectorAll('#users li');
+    userItems.forEach(li => {
+      const usernameSpan = li.querySelector('.user-name span');
+      const usernameText = usernameSpan ? usernameSpan.textContent.toLowerCase() : '';
+      if (usernameText.includes(filter)) {
+        li.style.display = '';
+      } else {
+        li.style.display = 'none';
+      }
+    });
+  });
 });
 </script>
 </body>
