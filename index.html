@@ -67,7 +67,7 @@ ul.list li.active{background:var(--accent)}
     <div id="typingIndicator"></div>
     <div id="messages" role="log" aria-live="polite"></div>
     <div id="input">
-      <input id="messageInput" placeholder="Type your message..." autocomplete="off" />
+      <input id="messageInput" placeholder="Type your message..." autocomplete="off" maxlength="200" />
       <button id="sendBtn">Send</button>
     </div>
   </main>
@@ -492,5 +492,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 </script>
 </body>
 </html>
+
 
 
