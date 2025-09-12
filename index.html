@@ -525,6 +525,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         li.style.display = 'none';
       }
+      // ---------- Profile Pic Upload Logic ----------
+  const profilePicContainer = document.getElementById('profilePicContainer');
+  const profilePic = document.getElementById('profilePic');
+  const profilePicInput = document.getElementById('profilePicInput');
+
+  profilePicContainer.onclick = () => {
+    profilePicInput.click();
+  };
+
+  profilePicInput.onchange = () => {
+    const file = profilePicInput.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        profilePic.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
     });
   });
 });
